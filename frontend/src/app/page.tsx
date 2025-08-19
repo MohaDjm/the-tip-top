@@ -1,103 +1,185 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Logo from '../components/Logo';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 15,
+    minutes: 23,
+    seconds: 45
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev.seconds > 0) {
+          return { ...prev, seconds: prev.seconds - 1 };
+        } else if (prev.minutes > 0) {
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        } else if (prev.hours > 0) {
+          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        }
+        return prev;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const gains = [
+    { name: 'Infuseur à thé', percentage: 60, icon: '🌺', description: 'Un infuseur à thé pratique pour savourer vos thés préférés' },
+    { name: 'Thé détox 100g', percentage: 20, icon: '🍃', description: 'Un thé détox de 100g pour une pause bien-être' },
+    { name: 'Thé signature 100g', percentage: 10, icon: '✨', description: 'Notre thé signature exclusif en format 100g' },
+    { name: 'Coffret découverte 39€', percentage: 6, icon: '🎁', description: 'Un coffret découverte d\'une valeur de 39€' },
+    { name: 'Coffret premium 69€', percentage: 4, icon: '🏆', description: 'Un coffret premium d\'une valeur de 69€' },
+    { name: 'Un an de thé - 360€', percentage: 'Tirage', icon: '👑', description: 'Un an de thé offert d\'une valeur de 360€' }
+  ];
+
+  const steps = [
+    { title: 'Achetez vos thés', icon: '🛒', description: 'Rendez-vous dans l\'une de nos 10 boutiques' },
+    { title: 'Récupérez votre code', icon: '🎫', description: 'Votre code unique se trouve sur votre ticket de caisse' },
+    { title: 'Saisissez votre code', icon: '⌨️', description: 'Connectez-vous et saisissez votre code sur notre site' },
+    { title: 'Réclamez votre lot', icon: '🎁', description: 'Présentez-vous en boutique avec votre QR code pour récupérer votre lot' }
+  ];
+
+  return (
+    <div className="min-h-screen">
+      {/* Header */}
+      <header className="absolute top-0 left-0 right-0 z-30 bg-transparent">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Logo width={100} height={60} className="text-white" />
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link href="#" className="text-white font-['Lato'] hover:text-[#D4B254] transition-colors">Accueil</Link>
+              <Link href="#" className="text-white font-['Lato'] hover:text-[#D4B254] transition-colors">Nos gains</Link>
+              <Link href="#" className="text-white font-['Lato'] hover:text-[#D4B254] transition-colors">Nos boutiques</Link>
+              <Link href="#" className="text-white font-['Lato'] hover:text-[#D4B254] transition-colors">Contact</Link>
+              <Link href="/auth">
+                <button className="bg-[#D4B254] hover:bg-[#B8A049] text-black font-['Lato'] font-bold text-sm px-6 py-2 rounded-full transition-all duration-300">
+                  MON COMPTE
+                </button>
+              </Link>
+            </nav>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-[#2C5545] to-[#1a3329] min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Hero Content */}
+        <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-6">
+          <h1 className="font-['Playfair_Display'] text-6xl md:text-7xl font-bold mb-2 leading-tight">
+            10 ans, 10 boutiques,
+          </h1>
+          <h2 className="font-['Playfair_Display'] text-6xl md:text-7xl font-bold text-[#D4B254] mb-8 leading-tight">
+            100% gagnant
+          </h2>
+          
+          <p className="text-lg md:text-xl mb-12 font-['Lato'] max-w-2xl mx-auto opacity-90">
+            Célébrez avec nous l'ouverture de notre 10ème boutique à Nice
+          </p>
+
+          {/* Countdown */}
+          <div className="mb-12">
+            <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-[#D4B254] text-black">
+              <div className="text-center">
+                <div className="text-2xl font-bold font-mono">
+                  {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+                </div>
+                <div className="text-xs mt-1 opacity-80">TEMPS RESTANT</div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA Button */}
+          <Link href="/auth">
+            <button className="bg-[#D4B254] hover:bg-[#B8A049] text-black font-['Lato'] font-bold text-sm px-8 py-3 rounded-full transition-all duration-300 shadow-[0_4px_12px_rgba(212,178,84,0.3)] hover:shadow-[0_6px_20px_rgba(212,178,84,0.4)] transform hover:-translate-y-1 uppercase tracking-wide">
+              PARTICIPER MAINTENANT
+            </button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Gains Section */}
+      <section className="py-20 bg-[#F5F1E6]">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="font-['Playfair_Display'] text-4xl md:text-5xl font-bold text-center text-[#2C5545] mb-16">
+            Découvrez vos gains
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {gains.map((gain, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 cursor-pointer group relative"
+              >
+                {/* Percentage Badge */}
+                <div className="absolute -top-3 -right-3 w-12 h-12 bg-[#2C5545] text-white rounded-full flex items-center justify-center font-bold text-sm">
+                  {typeof gain.percentage === 'number' ? `${gain.percentage}%` : gain.percentage === 'Tirage' ? '🎯' : gain.percentage}
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    {gain.icon}
+                  </div>
+                  <h3 className="font-['Lato'] font-bold text-lg text-[#2C5545] mb-3">
+                    {gain.name}
+                  </h3>
+                  <p className="text-sm text-gray-600 font-['Lato'] leading-relaxed">
+                    {gain.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How to Participate Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="font-['Playfair_Display'] text-4xl md:text-5xl font-bold text-center text-[#2C5545] mb-16">
+            Comment participer ?
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {steps.map((step, index) => (
+              <div key={index} className="text-center relative">
+                <div className="relative z-10 group">
+                  <div className="w-20 h-20 rounded-full bg-[#D4B254] flex items-center justify-center mx-auto mb-6 text-2xl group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    {step.icon}
+                  </div>
+                  <h3 className="font-['Lato'] font-bold text-lg text-[#2C5545] mb-3">
+                    {step.title}
+                  </h3>
+                  <p className="text-[#3A3A3A] font-['Lato'] text-sm leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer CTA */}
+      <section className="py-20 bg-[#2C5545]">
+        <div className="max-w-4xl mx-auto text-center px-6">
+          <h2 className="font-['Playfair_Display'] text-3xl md:text-4xl font-bold text-white mb-4">
+            Prêt à tenter votre chance ?
+          </h2>
+          <p className="text-white/80 font-['Lato'] mb-8">
+            100% des participants gagnent ! Ne manquez pas cette opportunité unique.
+          </p>
+          <Link href="/auth">
+            <button className="bg-[#D4B254] hover:bg-[#B8A049] text-black font-['Lato'] font-bold text-sm px-8 py-3 rounded-full transition-all duration-300 shadow-[0_4px_12px_rgba(212,178,84,0.3)] hover:shadow-[0_6px_20px_rgba(212,178,84,0.4)] transform hover:-translate-y-1 uppercase tracking-wide">
+              COMMENCER À JOUER
+            </button>
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
