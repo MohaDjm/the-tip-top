@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production
+build/
+dist/
+.next/
+out/
+
+# Misc
+.DS_Store
+*.pem
+.vscode/
+
+# Env files
+.env
+.env.local
+
+# Database
+*.db
+prisma/migrations/
+
+# Logs
+*.log
