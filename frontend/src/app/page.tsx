@@ -50,13 +50,18 @@ export default function Home() {
       <header className="absolute top-0 left-0 right-0 z-30 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Image 
-              src="/assets/images/logos/logo.png" 
-              alt="Thé Tip Top"
-              width={100}
-              height={60}
-              className="object-contain"
-            />
+            <div className="flex items-center space-x-3">
+              <Image 
+                src="/assets/images/logos/logo.png" 
+                alt="Thé Tip Top"
+                width={60}
+                height={40}
+                className="object-contain"
+              />
+              <h1 className="text-[#B8A049] font-['Playfair_Display'] text-xl font-bold tracking-wide">
+                THÉ TIP TOP
+              </h1>
+            </div>
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="#" className="text-[#2C5545] font-['Lato'] hover:text-[#D4B254] transition-colors">Accueil</Link>
               <Link href="#" className="text-[#2C5545] font-['Lato'] hover:text-[#D4B254] transition-colors">Nos gains</Link>
