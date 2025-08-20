@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Logo from '../components/Logo';
+import Image from 'next/image';
 
 export default function Home() {
   const [timeLeft, setTimeLeft] = useState({
@@ -47,15 +47,21 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-30 bg-transparent">
+      <header className="absolute top-0 left-0 right-0 z-30 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Logo width={100} height={60} className="text-white" />
+            <Image 
+              src="/assets/images/logos/logo.png" 
+              alt="Thé Tip Top"
+              width={100}
+              height={60}
+              className="object-contain"
+            />
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#" className="text-white font-['Lato'] hover:text-[#D4B254] transition-colors">Accueil</Link>
-              <Link href="#" className="text-white font-['Lato'] hover:text-[#D4B254] transition-colors">Nos gains</Link>
-              <Link href="#" className="text-white font-['Lato'] hover:text-[#D4B254] transition-colors">Nos boutiques</Link>
-              <Link href="#" className="text-white font-['Lato'] hover:text-[#D4B254] transition-colors">Contact</Link>
+              <Link href="#" className="text-[#2C5545] font-['Lato'] hover:text-[#D4B254] transition-colors">Accueil</Link>
+              <Link href="#" className="text-[#2C5545] font-['Lato'] hover:text-[#D4B254] transition-colors">Nos gains</Link>
+              <Link href="#" className="text-[#2C5545] font-['Lato'] hover:text-[#D4B254] transition-colors">Nos boutiques</Link>
+              <Link href="#" className="text-[#2C5545] font-['Lato'] hover:text-[#D4B254] transition-colors">Contact</Link>
               <Link href="/auth">
                 <button className="bg-[#D4B254] hover:bg-[#B8A049] text-black font-['Lato'] font-bold text-sm px-6 py-2 rounded-full transition-all duration-300">
                   MON COMPTE
