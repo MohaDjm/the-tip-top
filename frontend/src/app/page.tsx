@@ -54,8 +54,8 @@ export default function Home() {
               <Image 
                 src="/assets/images/logos/logo.png" 
                 alt="Thé Tip Top"
-                width={60}
-                height={40}
+                width={40}
+                height={20}
                 className="object-contain"
               />
               <h1 className="text-[#B8A049] font-['Playfair_Display'] text-xl font-bold tracking-wide">
@@ -191,6 +191,117 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-[#1a3329] text-white">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Logo et Description */}
+            <div className="lg:col-span-1">
+              <div className="flex items-center space-x-3 mb-4">
+                <Image 
+                  src="/assets/images/logos/logo.png" 
+                  alt="Thé Tip Top"
+                  width={40}
+                  height={20}
+                  className="object-contain"
+                />
+                <h3 className="text-[#D4B254] font-['Playfair_Display'] text-lg font-bold">
+                  THÉ TIP TOP
+                </h3>
+              </div>
+              <p className="text-white/80 font-['Lato'] text-sm leading-relaxed mb-4">
+                Depuis 10 ans, nous vous proposons les meilleurs thés du monde dans nos boutiques. 
+                Découvrez notre sélection premium et participez à notre jeu 100% gagnant !
+              </p>
+              <div className="flex space-x-4">
+                <a href="#" className="text-white/60 hover:text-[#D4B254] transition-colors">
+                  <span className="text-xl">📘</span>
+                </a>
+                <a href="#" className="text-white/60 hover:text-[#D4B254] transition-colors">
+                  <span className="text-xl">📷</span>
+                </a>
+                <a href="#" className="text-white/60 hover:text-[#D4B254] transition-colors">
+                  <span className="text-xl">🐦</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div>
+              <h4 className="font-['Playfair_Display'] text-lg font-bold text-[#D4B254] mb-4">Navigation</h4>
+              <ul className="space-y-2">
+                <li><Link href="/" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">Accueil</Link></li>
+                <li><Link href="#" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">Nos Gains</Link></li>
+                <li><Link href="#" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">Comment Participer</Link></li>
+                <li><Link href="/auth" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">Mon Compte</Link></li>
+                <li><Link href="#" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">Règlement du Jeu</Link></li>
+              </ul>
+            </div>
+
+            {/* Nos Boutiques */}
+            <div>
+              <h4 className="font-['Playfair_Display'] text-lg font-bold text-[#D4B254] mb-4">Nos Boutiques</h4>
+              <ul className="space-y-2">
+                <li><a href="#" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">Paris - Marais</a></li>
+                <li><a href="#" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">Lyon - Presqu&apos;île</a></li>
+                <li><a href="#" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">Marseille - Vieux Port</a></li>
+                <li><a href="#" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">Nice - Centre</a></li>
+                <li><a href="#" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">Voir toutes nos boutiques</a></li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="font-['Playfair_Display'] text-lg font-bold text-[#D4B254] mb-4">Contact</h4>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-2">
+                  <span className="text-[#D4B254] mt-1">📍</span>
+                  <p className="text-white/80 font-['Lato'] text-sm">
+                    18 rue de la Paix<br />
+                    75002 Paris, France
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-[#D4B254]">📞</span>
+                  <a href="tel:+33123456789" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
+                    +33 1 23 45 67 89
+                  </a>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-[#D4B254]">✉️</span>
+                  <a href="mailto:contact@thetiptop.fr" className="text-white/80 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
+                    contact@thetiptop.fr
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Séparateur */}
+          <div className="border-t border-white/20 mt-12 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+              <div className="flex flex-wrap justify-center md:justify-start space-x-6">
+                <Link href="#" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
+                  Mentions Légales
+                </Link>
+                <Link href="#" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
+                  Politique de Confidentialité
+                </Link>
+                <Link href="#" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
+                  CGV
+                </Link>
+                <Link href="#" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
+                  Cookies
+                </Link>
+              </div>
+              <p className="text-white/60 font-['Lato'] text-sm">
+                © 2024 Thé Tip Top. Tous droits réservés.
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

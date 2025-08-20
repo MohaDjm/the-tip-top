@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
@@ -31,42 +32,42 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Image */}
-      <div className="hidden lg:flex lg:w-2/5 relative bg-gradient-to-br from-[#2C5545] to-[#1a3329]">
-        <div className="absolute inset-0 bg-black/30"></div>
-        
-        {/* Background pattern or image would go here */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-8xl opacity-20">🫖</div>
+      {/* Left Side - Green Section */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-[#2C5545] to-[#1a3329]">
+        {/* Logo in top left */}
+        <div className="absolute top-6 left-6 z-20">
+          <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+            <Image 
+              src="/assets/images/logos/logo.png" 
+              alt="Thé Tip Top"
+              width={30}
+              height={15}
+              className="object-contain"
+            />
+            <span className="text-white text-sm font-['Playfair_Display'] font-bold">Thé Tip Top</span>
+          </Link>
         </div>
         
-        <div className="relative z-10 flex flex-col justify-center p-12 text-white">
-          <h1 className="font-['Playfair_Display'] text-4xl font-bold mb-6">
-            Bienvenue chez Thé Tip Top
-          </h1>
-          <p className="text-lg font-['Lato'] leading-relaxed mb-8">
-            Découvrez notre univers de thés d'exception et participez à notre grand jeu-concours. 
-            Chaque achat vous donne une chance de gagner des prix extraordinaires.
-          </p>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-[#D4B254] rounded-full"></div>
-              <span className="font-['Lato']">100% des participants gagnent</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-[#D4B254] rounded-full"></div>
-              <span className="font-['Lato']">Plus de 500 000 lots à gagner</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-[#D4B254] rounded-full"></div>
-              <span className="font-['Lato']">Des thés premium à découvrir</span>
+        {/* Centered Content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white">
+          {/* Large Tea Icon */}
+          <div className="mb-8">
+            <div className="text-8xl">
+              🫖
             </div>
           </div>
+          
+          <h1 className="font-['Playfair_Display'] text-4xl font-bold mb-4">
+            Bienvenue chez<br />Thé Tip Top
+          </h1>
+          <p className="text-lg font-['Lato'] leading-relaxed opacity-90 max-w-sm px-12">
+            Découvrez l&apos;univers premium du thé et participez à notre jeu-concours exceptionnel
+          </p>
         </div>
       </div>
 
       {/* Right Side - Form */}
-      <div className="flex-1 lg:w-3/5 flex items-center justify-center p-8">
+      <div className="flex-1 lg:w-1/2 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
           {/* Logo for mobile */}
           <div className="lg:hidden mb-8 text-center">
@@ -74,6 +75,16 @@ export default function AuthPage() {
               <span className="text-2xl">🍃</span>
               <h1 className="text-[#2C5545] text-2xl font-bold">Thé Tip Top</h1>
             </div>
+          </div>
+
+          {/* Page Title */}
+          <div className="text-center mb-8">
+            <h2 className="font-['Playfair_Display'] text-3xl font-bold text-[#2C5545] mb-2">
+              Connexion
+            </h2>
+            <p className="text-gray-600 font-['Lato'] text-sm">
+              Accédez à votre espace personnel
+            </p>
           </div>
 
           {/* Tabs */}
@@ -96,7 +107,7 @@ export default function AuthPage() {
                   : 'text-gray-500 hover:text-[#2C5545]'
               }`}
             >
-              S'inscrire
+              S&apos;inscrire
             </button>
           </div>
 
@@ -144,7 +155,7 @@ export default function AuthPage() {
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleInputChange}
-                      className="w-full h-12 px-4 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors"
+                      className="w-full h-12 px-4 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors text-black"
                       placeholder="Votre prénom"
                     />
                   </div>
@@ -157,7 +168,7 @@ export default function AuthPage() {
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleInputChange}
-                      className="w-full h-12 px-4 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors"
+                      className="w-full h-12 px-4 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors text-black"
                       placeholder="Votre nom"
                     />
                   </div>
@@ -174,7 +185,7 @@ export default function AuthPage() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full h-12 px-4 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors"
+                className="w-full h-12 px-4 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors text-black"
                 placeholder="votre@email.com"
               />
             </div>
@@ -189,7 +200,7 @@ export default function AuthPage() {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="w-full h-12 px-4 pr-12 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors"
+                  className="w-full h-12 px-4 pr-12 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors text-black"
                   placeholder="••••••••"
                 />
                 <button
@@ -212,7 +223,7 @@ export default function AuthPage() {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className="w-full h-12 px-4 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors"
+                  className="w-full h-12 px-4 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors text-black"
                   placeholder="••••••••"
                 />
               </div>
