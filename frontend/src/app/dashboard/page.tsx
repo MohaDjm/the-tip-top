@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Navigation from '../../components/Navigation'; 
+import Navigation from '../../components/Navigation';
+import PrizeWheel from '../../components/PrizeWheel'; 
 
 interface User {
   id: string;
@@ -33,6 +34,8 @@ export default function DashboardPage() {
   const [participations, setParticipations] = useState<Participation[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCode, setNewCode] = useState('');
+  const [showWheel, setShowWheel] = useState(false);
+  const [wheelPrize, setWheelPrize] = useState('');
 
   useEffect(() => {
     // Check authentication and load user data
@@ -94,9 +97,10 @@ export default function DashboardPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`Félicitations ! Vous avez gagné : ${data.gain.name}`);
+        // Show wheel animation with the predetermined prize
+        setWheelPrize(data.gain.name);
+        setShowWheel(true);
         setNewCode('');
-        loadParticipations(token); // Reload participations
       } else {
         alert(data.error || 'Code invalide');
       }
@@ -111,7 +115,7 @@ export default function DashboardPage() {
     memberSince: '2024',
     participations: participations.length,
     gainsWon: participations.filter(p => p.isClaimed).length,
-    totalValue: participations.reduce((sum, p) => sum + p.gain.value, 0)
+    totalValue: participations.filter(p => p.isClaimed).reduce((sum, p) => sum + p.gain.value, 0)
   };
 
   const filteredParticipations = participations.filter(participation => {
@@ -550,6 +554,26 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Prize Wheel Modal */}
+      {showWheel && (
+        <PrizeWheel
+          targetPrize={wheelPrize}
+          onComplete={(prize) => {
+            // Optional: handle prize completion logic
+            console.log('Prize completed:', prize);
+          }}
+          onClose={() => {
+            setShowWheel(false);
+            setWheelPrize('');
+            // Reload participations after wheel closes
+            const token = localStorage.getItem('token');
+            if (token) {
+              loadParticipations(token);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

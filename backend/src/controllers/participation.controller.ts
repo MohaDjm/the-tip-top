@@ -10,6 +10,68 @@ export class ParticipationController {
     this.codeService = new CodeService();
   }
 
+  // Validate code and return prize info (for wheel animation)
+  validateCode = async (req: Request, res: Response) => {
+    try {
+      const { code } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+      }
+
+      const codeData = await this.codeService.getCodeByString(code);
+      
+      if (!codeData) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          success: false,
+          message: 'Code invalide'
+        });
+      }
+
+      if (codeData.isUsed) {
+        return res.status(HTTP_STATUS.CONFLICT).json({
+          success: false,
+          message: 'Ce code a déjà été utilisé'
+        });
+      }
+
+      // Check daily participation limit
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const todayParticipation = await this.codeService.getUserTodayParticipation(userId, today, tomorrow);
+      
+      if (todayParticipation) {
+        return res.status(HTTP_STATUS.CONFLICT).json({
+          success: false,
+          message: 'Vous ne pouvez participer qu\'une fois par jour'
+        });
+      }
+
+      res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: 'Code valide',
+        data: {
+          prize: codeData.gain.name,
+          prizeValue: codeData.gain.value,
+          prizeDescription: codeData.gain.description
+        }
+      });
+    } catch (error: any) {
+      logger.error('Code validation error:', error);
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'Erreur lors de la validation du code'
+      });
+    }
+  };
+
   participate = async (req: Request, res: Response) => {
     try {
       const { code } = req.body;

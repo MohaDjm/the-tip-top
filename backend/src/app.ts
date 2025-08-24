@@ -230,7 +230,118 @@ app.post('/api/auth/social', async (req: Request, res: Response) => {
 // ROUTES DE PARTICIPATION
 // ===========================
 
-// Valider un code et participer
+// Vérifier un code sans le marquer comme utilisé (pour la roue)
+app.post('/api/participation/check-code', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { code } = req.body;
+
+    // Vérifier le format du code (10 caractères alphanumériques)
+    if (!/^[A-Z0-9]{10}$/.test(code)) {
+      return res.status(400).json({ error: 'Format de code invalide' });
+    }
+
+    // Vérifier dans la base de données
+    const codeEntry = await prisma.code.findUnique({
+      where: { code },
+      include: { gain: true }
+    });
+
+    if (!codeEntry) {
+      return res.status(404).json({ error: 'Code invalide' });
+    }
+
+    if (codeEntry.isUsed) {
+      return res.status(400).json({ error: 'Ce code a déjà été utilisé' });
+    }
+
+    // Retourner le gain sans marquer le code comme utilisé
+    res.json({
+      valid: true,
+      gain: {
+        name: codeEntry.gain.name,
+        value: codeEntry.gain.value,
+        description: codeEntry.gain.description
+      }
+    });
+  } catch (error) {
+    console.error('Erreur vérification code:', error);
+    res.status(500).json({ error: 'Erreur lors de la vérification du code' });
+  }
+});
+
+// Marquer un code comme utilisé après animation (claim)
+app.post('/api/participation/claim', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { code } = req.body;
+    const userId = req.user.id;
+
+    // Vérifier le format du code (10 caractères alphanumériques)
+    if (!/^[A-Z0-9]{10}$/.test(code)) {
+      return res.status(400).json({ error: 'Format de code invalide' });
+    }
+
+    // Vérifier dans la base de données
+    const codeEntry = await prisma.code.findUnique({
+      where: { code },
+      include: { gain: true }
+    });
+
+    if (!codeEntry) {
+      return res.status(404).json({ error: 'Code invalide' });
+    }
+
+    if (codeEntry.isUsed) {
+      return res.status(400).json({ error: 'Ce code a déjà été utilisé' });
+    }
+
+    // Créer la participation dans une transaction
+    const participation = await prisma.$transaction(async (tx) => {
+      // Marquer le code comme utilisé
+      await tx.code.update({
+        where: { id: codeEntry.id },
+        data: { isUsed: true }
+      });
+
+      // Créer la participation
+      const newParticipation = await tx.participation.create({
+        data: {
+          userId,
+          codeId: codeEntry.id,
+          gainId: codeEntry.gainId,
+          ipAddress: req.ip || 'unknown',
+          userAgent: req.headers['user-agent'] || 'unknown'
+        },
+        include: { gain: true }
+      });
+
+      // Décrémenter le stock de gains restants
+      await tx.gain.update({
+        where: { id: codeEntry.gainId },
+        data: { remainingQuantity: { decrement: 1 } }
+      });
+
+      return newParticipation;
+    });
+
+    res.json({
+      success: true,
+      participation: {
+        id: participation.id,
+        gain: {
+          name: participation.gain.name,
+          value: participation.gain.value,
+          description: participation.gain.description
+        },
+        participationDate: participation.participationDate
+      }
+    });
+  } catch (error) {
+    console.error('Erreur claim code:', error);
+    res.status(500).json({ error: 'Erreur lors de la réclamation du gain' });
+  }
+});
+
+// Valider un code et participer (DEPRECATED - utiliser check-code + claim)
 app.post('/api/participation/validate', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { code } = req.body;

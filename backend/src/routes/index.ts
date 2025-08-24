@@ -76,6 +76,8 @@ const participationRoutes = Router();
 // All participation routes require authentication and email verification
 participationRoutes.use(authenticateToken, requireEmailVerification, requireClient);
 
+// Validate code before showing wheel (secure endpoint)
+participationRoutes.post('/validate-code', participationLimiter, validateParticipation, participationController.validateCode);
 participationRoutes.post('/', participationLimiter, validateParticipation, participationController.participate);
 participationRoutes.get('/my-participations', validatePagination, participationController.getMyParticipations);
 participationRoutes.get('/stats', participationController.getParticipationStats);

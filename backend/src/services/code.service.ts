@@ -258,6 +258,18 @@ export class CodeService {
     };
   }
 
+  async getUserTodayParticipation(userId: string, today: Date, tomorrow: Date): Promise<Participation | null> {
+    return prisma.participation.findFirst({
+      where: {
+        userId,
+        participationDate: {
+          gte: today,
+          lt: tomorrow
+        }
+      }
+    });
+  }
+
   async getCodeByString(codeString: string): Promise<Code & { gain: Gain } | null> {
     return prisma.code.findUnique({
       where: { code: codeString },
