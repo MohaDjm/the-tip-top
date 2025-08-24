@@ -170,7 +170,7 @@ export default function AdminPage() {
 
       if (allParticipationsResponse.ok) {
         const participationsData = await allParticipationsResponse.json();
-        setParticipations(participationsData.data?.participations || []);
+        setParticipations(participationsData || []);
       }
 
       // Load users
@@ -182,7 +182,7 @@ export default function AdminPage() {
 
       if (usersResponse.ok) {
         const usersData = await usersResponse.json();
-        setUsers(usersData.data?.users || []);
+        setUsers(usersData || []);
       }
 
     } catch (error) {
