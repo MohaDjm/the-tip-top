@@ -679,7 +679,21 @@ app.get('/api/admin/gains', authMiddleware, roleMiddleware(['ADMIN']), async (re
       }
     });
 
-    res.json(gains);
+    // Enrichir les données avec les informations de codes
+    const enrichedGains = await Promise.all(gains.map(async (gain) => {
+      const totalCodes = await prisma.code.count({ where: { gainId: gain.id } });
+      const usedCodes = await prisma.code.count({ where: { gainId: gain.id, isUsed: true } });
+      
+      return {
+        ...gain,
+        totalCodes,
+        usedCodes,
+        distributed: gain._count.participations,
+        remaining: gain.remainingQuantity
+      };
+    }));
+
+    res.json(enrichedGains);
   } catch (error) {
     console.error('Erreur gains:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des gains' });
