@@ -1,86 +1,139 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import Navigation from '../../components/Navigation'; 
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+}
+
+interface Participation {
+  id: string;
+  participationDate: string;
+  gain: {
+    name: string;
+    value: number;
+    description: string;
+  };
+  code: {
+    code: string;
+  };
+  isClaimed: boolean;
+  claimedAt?: string;
+}
 
 export default function DashboardPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'new'>('all');
   const [activeMenuItem, setActiveMenuItem] = useState('participations');
+  const [user, setUser] = useState<User | null>(null);
+  const [participations, setParticipations] = useState<Participation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newCode, setNewCode] = useState('');
 
-  // Mock data - replace with real data from API
+  useEffect(() => {
+    // Check authentication and load user data
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (!token || !userData) {
+      window.location.href = '/auth';
+      return;
+    }
+
+    try {
+      setUser(JSON.parse(userData));
+      loadParticipations(token);
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      window.location.href = '/auth';
+    }
+  }, []);
+
+  const loadParticipations = async (token: string) => {
+    try {
+      const response = await fetch('http://localhost:3002/api/participation/history', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setParticipations(data);
+      } else {
+        console.error('Failed to load participations');
+      }
+    } catch (error) {
+      console.error('Error loading participations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCode.trim()) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const response = await fetch('http://localhost:3002/api/participation/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code: newCode.toUpperCase() }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`Félicitations ! Vous avez gagné : ${data.gain.name}`);
+        setNewCode('');
+        loadParticipations(token); // Reload participations
+      } else {
+        alert(data.error || 'Code invalide');
+      }
+    } catch (error) {
+      console.error('Error validating code:', error);
+      alert('Erreur lors de la validation du code');
+    }
+  };
+
   const userStats = {
-    name: 'Élise',
-    memberSince: '2023',
-    participations: 3,
-    wins: 2,
-    totalValue: 87
+    name: user?.firstName || 'Utilisateur',
+    memberSince: '2024',
+    participations: participations.length,
+    gainsWon: participations.filter(p => p.isClaimed).length,
+    totalValue: participations.reduce((sum, p) => sum + p.gain.value, 0)
   };
 
-  const participations = [
-    {
-      id: 1,
-      date: '2024-01-15',
-      prize: 'Infuseur à thé',
-      code: 'ABC123XYZ0',
-      status: 'claimed',
-      icon: '🫖',
-      value: 8
-    },
-    {
-      id: 2,
-      date: '2024-01-10',
-      prize: 'Coffret découverte 39€',
-      code: 'DEF456UVW1',
-      status: 'pending',
-      icon: '🎁',
-      value: 39
-    },
-    {
-      id: 3,
-      date: '2024-01-05',
-      prize: 'Thé signature 100g',
-      code: 'GHI789RST2',
-      status: 'claimed',
-      icon: '⭐',
-      value: 18
-    }
-  ];
+  const filteredParticipations = participations.filter(participation => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'new') return !participation.isClaimed;
+    return true;
+  });
 
-  const menuItems = [
-    { id: 'participations', label: 'Mes participations', icon: '🎯', active: true },
-    { id: 'prizes', label: 'Mes gains obtenus', icon: '🏆', active: false },
-    { id: 'profile', label: 'Mes informations personnelles', icon: '👤', active: false },
-    { id: 'referral', label: 'Programme de parrainage', icon: '🤝', active: false },
-    { id: 'notifications', label: 'Préférences de notifications', icon: '🔔', active: false },
-    { id: 'history', label: 'Historique des achats', icon: '📋', active: false }
-  ];
-
-  const getStatusBadge = (status: string) => {
-    if (status === 'claimed') {
-      return (
-        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-['Lato'] font-medium bg-green-100 text-green-800">
-          ✅ Récupéré
-        </span>
-      );
-    }
+  if (loading) {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-['Lato'] font-medium bg-orange-100 text-orange-800">
-        ⏳ En attente
-      </span>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2C5545] mx-auto mb-4"></div>
+          <p className="text-[#2C5545] font-['Lato']">Chargement...</p>
+        </div>
+      </div>
     );
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navigation />
       <div className="flex">
         {/* Sidebar */}
         <div className="w-80 bg-white shadow-lg min-h-screen">
@@ -98,16 +151,16 @@ export default function DashboardPage() {
               </p>
               
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="bg-[#F5F1E6] rounded-lg p-3">
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-[#F5F1E6] rounded-lg p-3 min-h-[4rem] flex flex-col justify-center">
                   <div className="text-lg font-bold text-[#2C5545]">{userStats.participations}</div>
-                  <div className="text-xs text-gray-600 font-['Lato']">Participations</div>
+                  <div className="text-xs text-gray-600 font-['Lato'] leading-tight">Participations</div>
                 </div>
-                <div className="bg-[#F5F1E6] rounded-lg p-3">
-                  <div className="text-lg font-bold text-[#2C5545]">{userStats.wins}</div>
-                  <div className="text-xs text-gray-600 font-['Lato']">Gains</div>
+                <div className="bg-[#F5F1E6] rounded-lg p-3 min-h-[4rem] flex flex-col justify-center">
+                  <div className="text-lg font-bold text-[#2C5545]">{userStats.gainsWon}</div>
+                  <div className="text-xs text-gray-600 font-['Lato'] leading-tight">Gains</div>
                 </div>
-                <div className="bg-[#F5F1E6] rounded-lg p-3">
+                <div className="bg-[#F5F1E6] rounded-lg p-3 min-h-[4rem] flex flex-col justify-center">
                   <div className="text-lg font-bold text-[#D4B254]">{userStats.totalValue}€</div>
                   <div className="text-xs text-gray-600 font-['Lato']">Total</div>
                 </div>
@@ -118,21 +171,84 @@ export default function DashboardPage() {
           {/* Menu */}
           <nav className="p-4">
             <ul className="space-y-2">
-              {menuItems.map((item) => (
-                <li key={item.id}>
-                  <button
-                    onClick={() => setActiveMenuItem(item.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-['Lato'] font-medium transition-all duration-200 ${
-                      activeMenuItem === item.id
-                        ? 'bg-[#2C5545] text-white shadow-md'
-                        : 'text-gray-700 hover:bg-[#F5F1E6] hover:text-[#2C5545]'
-                    }`}
-                  >
-                    <span className="text-lg">{item.icon}</span>
-                    <span className="text-sm">{item.label}</span>
-                  </button>
-                </li>
-              ))}
+              <li>
+                <button
+                  onClick={() => setActiveMenuItem('participations')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-['Lato'] font-medium transition-all duration-200 ${
+                    activeMenuItem === 'participations'
+                      ? 'bg-[#2C5545] text-white shadow-md'
+                      : 'text-gray-700 hover:bg-[#F5F1E6] hover:text-[#2C5545]'
+                  }`}
+                >
+                  <span className="text-lg">🎯</span>
+                  <span className="text-sm">Mes participations</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveMenuItem('prizes')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-['Lato'] font-medium transition-all duration-200 ${
+                    activeMenuItem === 'prizes'
+                      ? 'bg-[#2C5545] text-white shadow-md'
+                      : 'text-gray-700 hover:bg-[#F5F1E6] hover:text-[#2C5545]'
+                  }`}
+                >
+                  <span className="text-lg">🏆</span>
+                  <span className="text-sm">Mes gains obtenus</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveMenuItem('profile')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-['Lato'] font-medium transition-all duration-200 ${
+                    activeMenuItem === 'profile'
+                      ? 'bg-[#2C5545] text-white shadow-md'
+                      : 'text-gray-700 hover:bg-[#F5F1E6] hover:text-[#2C5545]'
+                  }`}
+                >
+                  <span className="text-lg">👤</span>
+                  <span className="text-sm">Mes informations personnelles</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveMenuItem('referral')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-['Lato'] font-medium transition-all duration-200 ${
+                    activeMenuItem === 'referral'
+                      ? 'bg-[#2C5545] text-white shadow-md'
+                      : 'text-gray-700 hover:bg-[#F5F1E6] hover:text-[#2C5545]'
+                  }`}
+                >
+                  <span className="text-lg">🤝</span>
+                  <span className="text-sm">Programme de parrainage</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveMenuItem('notifications')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-['Lato'] font-medium transition-all duration-200 ${
+                    activeMenuItem === 'notifications'
+                      ? 'bg-[#2C5545] text-white shadow-md'
+                      : 'text-gray-700 hover:bg-[#F5F1E6] hover:text-[#2C5545]'
+                  }`}
+                >
+                  <span className="text-lg">🔔</span>
+                  <span className="text-sm">Préférences de notifications</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveMenuItem('history')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-['Lato'] font-medium transition-all duration-200 ${
+                    activeMenuItem === 'history'
+                      ? 'bg-[#2C5545] text-white shadow-md'
+                      : 'text-gray-700 hover:bg-[#F5F1E6] hover:text-[#2C5545]'
+                  }`}
+                >
+                  <span className="text-lg">📋</span>
+                  <span className="text-sm">Historique des achats</span>
+                </button>
+              </li>
             </ul>
           </nav>
         </div>
@@ -140,15 +256,18 @@ export default function DashboardPage() {
         {/* Main Content */}
         <div className="flex-1 p-8">
           <div className="max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="mb-8">
-              <h1 className="font-['Playfair_Display'] text-3xl font-bold text-[#2C5545] mb-2">
-                MES PARTICIPATIONS AU JEU-CONCOURS
-              </h1>
-              <p className="text-gray-600 font-['Lato']">
-                Retrouvez toutes vos participations et suivez l'état de vos gains
-              </p>
-            </div>
+            {/* Dynamic Content Based on Active Menu Item */}
+            {activeMenuItem === 'participations' && (
+              <>
+                {/* Header */}
+                <div className="mb-8">
+                  <h1 className="font-['Playfair_Display'] text-3xl font-bold text-[#2C5545] mb-2">
+                    MES PARTICIPATIONS AU JEU-CONCOURS
+                  </h1>
+                  <p className="text-gray-600 font-['Lato']">
+                    Retrouvez toutes vos participations et suivez l&apos;état de vos gains
+                  </p>
+                </div>
 
             {/* Filters */}
             <div className="flex space-x-4 mb-6">
@@ -176,7 +295,7 @@ export default function DashboardPage() {
 
             {/* Participations Grid */}
             <div className="grid gap-6 mb-8">
-              {participations.map((participation) => (
+              {filteredParticipations.map((participation) => (
                 <div
                   key={participation.id}
                   className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] transition-all duration-300 border border-gray-100"
@@ -184,54 +303,59 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       {/* Date Badge */}
-                      <div className="bg-[#2C5545] text-white px-3 py-1 rounded-lg text-sm font-['Lato'] font-medium">
-                        {formatDate(participation.date)}
-                      </div>
-                      
-                      {/* Prize Info */}
-                      <div className="flex items-center space-x-3">
-                        <span className="text-2xl">{participation.icon}</span>
-                        <div>
-                          <h3 className="font-['Lato'] font-bold text-lg text-[#2C5545]">
-                            {participation.prize}
-                          </h3>
-                          <p className="text-sm text-gray-600 font-['Lato']">
-                            Code: <span className="font-mono font-medium">{participation.code}</span>
-                          </p>
+                      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <span className="text-2xl">🎫</span>
+                              <div>
+                                <h3 className="font-['Playfair_Display'] text-lg font-semibold text-[#2C5545]">
+                                  Code: {participation.code.code}
+                                </h3>
+                                <p className="text-sm text-gray-500 font-['Lato']">
+                                  {new Date(participation.participationDate).toLocaleDateString('fr-FR')}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-[#F5F1E6] rounded-lg p-4 mb-3">
+                              <h4 className="font-['Lato'] font-semibold text-[#2C5545] mb-1">
+                                {participation.gain.name}
+                              </h4>
+                              <p className="text-sm text-gray-600 font-['Lato']">
+                                {participation.gain.value > 0 ? `Valeur: ${participation.gain.value}€` : 'Cadeau offert'}
+                              </p>
+                              <p className="text-xs text-gray-500 font-['Lato'] mt-1">
+                                {participation.gain.description}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="text-right">
+                            {!participation.isClaimed && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mb-2">
+                                🆕 À récupérer
+                              </span>
+                            )}
+                            {participation.isClaimed ? (
+                              <div>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-1">
+                                  ✅ Récupéré
+                                </span>
+                                {participation.claimedAt && (
+                                  <p className="text-xs text-gray-500 font-['Lato']">
+                                    {new Date(participation.claimedAt).toLocaleDateString('fr-FR')}
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              <button className="bg-[#D4B254] hover:bg-[#c4a244] text-white px-4 py-2 rounded-lg font-['Lato'] font-medium text-sm transition-colors duration-200">
+                                Récupérer en boutique
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="flex items-center space-x-4">
-                      {/* Value */}
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-[#D4B254]">
-                          {participation.value}€
-                        </div>
-                      </div>
-
-                      {/* Status */}
-                      <div>
-                        {getStatusBadge(participation.status)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex space-x-3">
-                      <button className="flex items-center space-x-2 px-4 py-2 bg-[#F5F1E6] hover:bg-[#D4B254] hover:text-white text-[#2C5545] rounded-lg font-['Lato'] font-medium transition-all duration-200">
-                        <span>📱</span>
-                        <span>Afficher QR code</span>
-                      </button>
-                      <button className="flex items-center space-x-2 px-4 py-2 bg-[#F5F1E6] hover:bg-[#D4B254] hover:text-white text-[#2C5545] rounded-lg font-['Lato'] font-medium transition-all duration-200">
-                        <span>👁️</span>
-                        <span>Voir détails</span>
-                      </button>
-                      <button className="flex items-center space-x-2 px-4 py-2 bg-[#F5F1E6] hover:bg-[#D4B254] hover:text-white text-[#2C5545] rounded-lg font-['Lato'] font-medium transition-all duration-200">
-                        <span>📞</span>
-                        <span>Contacter boutique</span>
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -241,33 +365,188 @@ export default function DashboardPage() {
             {/* Referral Section */}
             <div className="bg-gradient-to-r from-[#2C5545] to-[#1a3329] rounded-xl p-8 text-white">
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="font-['Playfair_Display'] text-2xl font-bold mb-2">
-                    Programme de Parrainage
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                  <h3 className="font-['Playfair_Display'] text-xl font-semibold text-[#2C5545] mb-4">
+                    Nouveau Code
                   </h3>
-                  <p className="font-['Lato'] text-lg mb-4 opacity-90">
-                    Partagez votre code et gagnez 5€ pour chaque ami inscrit
+                  <p className="text-gray-600 font-['Lato'] mb-4">
+                    Saisissez votre code de participation pour découvrir votre gain !
                   </p>
                   
-                  {/* Referral Code */}
-                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 inline-block">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-sm font-['Lato'] opacity-75">Votre code :</span>
-                      <span className="font-mono text-xl font-bold text-[#D4B254] tracking-wider">
-                        ELISE2024
-                      </span>
-                      <button className="ml-2 px-3 py-1 bg-[#D4B254] text-black rounded font-['Lato'] font-medium text-sm hover:bg-[#B8A049] transition-colors">
-                        Copier
-                      </button>
+                  <form onSubmit={handleCodeSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#2C5545] mb-2 font-['Lato']">
+                        Code de participation
+                      </label>
+                      <input
+                        type="text"
+                        value={newCode}
+                        onChange={(e) => setNewCode(e.target.value.toUpperCase())}
+                        placeholder="ABC123XYZ0"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-[#D4B254] focus:outline-none transition-colors font-['Lato'] text-center text-lg font-bold tracking-wider uppercase text-black"
+                        maxLength={10}
+                        required
+                      />
                     </div>
-                  </div>
+                    
+                    <button 
+                      type="submit"
+                      className="w-full bg-[#D4B254] hover:bg-[#c4a244] text-white py-3 rounded-lg font-['Lato'] font-bold text-lg transition-colors duration-200 shadow-[0_4px_12px_rgba(212,178,84,0.3)]"
+                    >
+                      Valider mon code
+                    </button>
+                  </form>
                 </div>
                 
                 <div className="text-6xl opacity-20">
                   🎫
                 </div>
               </div>
-            </div>
+                </div>
+              </>
+            )}
+
+            {/* Prizes Section */}
+            {activeMenuItem === 'prizes' && (
+              <div className="mb-8">
+                <h1 className="font-['Playfair_Display'] text-3xl font-bold text-[#2C5545] mb-2">
+                  MES GAINS OBTENUS
+                </h1>
+                <p className="text-gray-600 font-['Lato'] mb-6">
+                  Consultez tous vos gains remportés lors de vos participations
+                </p>
+                
+                <div className="grid gap-6">
+                  {participations.filter(p => p.isClaimed).map((participation) => (
+                    <div key={participation.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <span className="text-3xl">🏆</span>
+                          <div>
+                            <h3 className="font-['Playfair_Display'] text-lg font-semibold text-[#2C5545]">
+                              {participation.gain.name}
+                            </h3>
+                            <p className="text-sm text-gray-500 font-['Lato']">
+                              Récupéré le {new Date(participation.claimedAt!).toLocaleDateString('fr-FR')}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                          ✅ Récupéré
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {participations.filter(p => p.isClaimed).length === 0 && (
+                    <div className="text-center py-12">
+                      <span className="text-6xl opacity-20">🎁</span>
+                      <p className="text-gray-500 font-['Lato'] mt-4">Aucun gain récupéré pour le moment</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Profile Section */}
+            {activeMenuItem === 'profile' && (
+              <div className="mb-8">
+                <h1 className="font-['Playfair_Display'] text-3xl font-bold text-[#2C5545] mb-2">
+                  MES INFORMATIONS PERSONNELLES
+                </h1>
+                <p className="text-gray-600 font-['Lato'] mb-6">
+                  Gérez vos informations personnelles et préférences de compte
+                </p>
+                
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-[#2C5545] mb-2 font-['Lato']">
+                        Prénom
+                      </label>
+                      <input
+                        type="text"
+                        value={user?.firstName || ''}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-[#D4B254] focus:outline-none transition-colors font-['Lato'] text-black"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#2C5545] mb-2 font-['Lato']">
+                        Nom
+                      </label>
+                      <input
+                        type="text"
+                        value={user?.lastName || ''}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-[#D4B254] focus:outline-none transition-colors font-['Lato'] text-black"
+                        readOnly
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-[#2C5545] mb-2 font-['Lato']">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={user?.email || ''}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-[#D4B254] focus:outline-none transition-colors font-['Lato'] text-black"
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800 font-['Lato']">
+                      💡 Pour modifier vos informations, contactez notre service client
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Other sections placeholders */}
+            {activeMenuItem === 'referral' && (
+              <div className="mb-8">
+                <h1 className="font-['Playfair_Display'] text-3xl font-bold text-[#2C5545] mb-2">
+                  PROGRAMME DE PARRAINAGE
+                </h1>
+                <p className="text-gray-600 font-['Lato'] mb-6">
+                  Parrainez vos amis et gagnez des avantages exclusifs
+                </p>
+                <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center">
+                  <span className="text-6xl opacity-20">👥</span>
+                  <p className="text-gray-500 font-['Lato'] mt-4">Fonctionnalité en cours de développement</p>
+                </div>
+              </div>
+            )}
+
+            {activeMenuItem === 'notifications' && (
+              <div className="mb-8">
+                <h1 className="font-['Playfair_Display'] text-3xl font-bold text-[#2C5545] mb-2">
+                  PRÉFÉRENCES DE NOTIFICATIONS
+                </h1>
+                <p className="text-gray-600 font-['Lato'] mb-6">
+                  Gérez vos préférences de communication
+                </p>
+                <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center">
+                  <span className="text-6xl opacity-20">🔔</span>
+                  <p className="text-gray-500 font-['Lato'] mt-4">Fonctionnalité en cours de développement</p>
+                </div>
+              </div>
+            )}
+
+            {activeMenuItem === 'history' && (
+              <div className="mb-8">
+                <h1 className="font-['Playfair_Display'] text-3xl font-bold text-[#2C5545] mb-2">
+                  HISTORIQUE DES ACHATS
+                </h1>
+                <p className="text-gray-600 font-['Lato'] mb-6">
+                  Consultez l&apos;historique de vos achats en boutique
+                </p>
+                <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center">
+                  <span className="text-6xl opacity-20">🛍️</span>
+                  <p className="text-gray-500 font-['Lato'] mt-4">Fonctionnalité en cours de développement</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

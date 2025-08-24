@@ -32,7 +32,7 @@ export class AuthController {
   login = async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
-      const result = await this.authService.login(email, password, req.ip, req.get('User-Agent') || '');
+      const result = await this.authService.login(email, password, req.ip || '', req.get('User-Agent') || '');
       
       res.status(HTTP_STATUS.OK).json({
         success: true,

@@ -1,17 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Navigation from '../components/Navigation';
 
 export default function Home() {
+  const router = useRouter();
   const [timeLeft, setTimeLeft] = useState({
     hours: 15,
     minutes: 23,
     seconds: 45
   });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev.seconds > 0) {
@@ -27,6 +35,14 @@ export default function Home() {
 
     return () => clearInterval(timer);
   }, []);
+
+  const handleParticipateClick = () => {
+    if (isLoggedIn) {
+      router.push('/dashboard');
+    } else {
+      router.push('/auth');
+    }
+  };
 
   const gains = [
     { name: 'Infuseur à thé', percentage: 60, icon: '🌺', description: 'Un infuseur à thé pratique pour savourer vos thés préférés' },
@@ -45,37 +61,9 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-30 bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Image 
-                src="/assets/images/logos/logo.png" 
-                alt="Thé Tip Top"
-                width={40}
-                height={20}
-                className="object-contain"
-              />
-              <h1 className="text-[#B8A049] font-['Playfair_Display'] text-xl font-bold tracking-wide">
-                THÉ TIP TOP
-              </h1>
-            </div>
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#" className="text-[#2C5545] font-['Lato'] hover:text-[#D4B254] transition-colors">Accueil</Link>
-              <Link href="#" className="text-[#2C5545] font-['Lato'] hover:text-[#D4B254] transition-colors">Nos gains</Link>
-              <Link href="#" className="text-[#2C5545] font-['Lato'] hover:text-[#D4B254] transition-colors">Nos boutiques</Link>
-              <Link href="#" className="text-[#2C5545] font-['Lato'] hover:text-[#D4B254] transition-colors">Contact</Link>
-              <Link href="/auth">
-                <button className="bg-[#D4B254] hover:bg-[#B8A049] text-black font-['Lato'] font-bold text-sm px-6 py-2 rounded-full transition-all duration-300">
-                  MON COMPTE
-                </button>
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#F5F1E6]">
+      {/* Navigation */}
+      <Navigation />
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-[#2C5545] to-[#1a3329] min-h-screen flex items-center justify-center overflow-hidden">
@@ -89,7 +77,7 @@ export default function Home() {
           </h2>
           
           <p className="text-lg md:text-xl mb-12 font-['Lato'] max-w-2xl mx-auto opacity-90">
-            Célébrez avec nous l'ouverture de notre 10ème boutique à Nice
+            Célébrez avec nous l&apos;ouverture de notre 10ème boutique à Nice
           </p>
 
           {/* Countdown */}
@@ -105,11 +93,12 @@ export default function Home() {
           </div>
 
           {/* CTA Button */}
-          <Link href="/auth">
-            <button className="bg-[#D4B254] hover:bg-[#B8A049] text-black font-['Lato'] font-bold text-sm px-8 py-3 rounded-full transition-all duration-300 shadow-[0_4px_12px_rgba(212,178,84,0.3)] hover:shadow-[0_6px_20px_rgba(212,178,84,0.4)] transform hover:-translate-y-1 uppercase tracking-wide">
-              PARTICIPER MAINTENANT
-            </button>
-          </Link>
+          <button 
+            onClick={handleParticipateClick}
+            className="bg-[#D4B254] hover:bg-[#B8A049] text-black font-['Lato'] font-bold text-sm px-8 py-3 rounded-full transition-all duration-300 shadow-[0_4px_12px_rgba(212,178,84,0.3)] hover:shadow-[0_6px_20px_rgba(212,178,84,0.4)] transform hover:-translate-y-1 uppercase tracking-wide"
+          >
+            {isLoggedIn ? 'ACCÉDER À MON ESPACE' : 'PARTICIPER MAINTENANT'}
+          </button>
         </div>
       </section>
 
@@ -184,11 +173,12 @@ export default function Home() {
           <p className="text-white/80 font-['Lato'] mb-8">
             100% des participants gagnent ! Ne manquez pas cette opportunité unique.
           </p>
-          <Link href="/auth">
-            <button className="bg-[#D4B254] hover:bg-[#B8A049] text-black font-['Lato'] font-bold text-sm px-8 py-3 rounded-full transition-all duration-300 shadow-[0_4px_12px_rgba(212,178,84,0.3)] hover:shadow-[0_6px_20px_rgba(212,178,84,0.4)] transform hover:-translate-y-1 uppercase tracking-wide">
-              COMMENCER À JOUER
-            </button>
-          </Link>
+          <button 
+            onClick={handleParticipateClick}
+            className="bg-[#D4B254] hover:bg-[#B8A049] text-black font-['Lato'] font-bold text-sm px-8 py-3 rounded-full transition-all duration-300 shadow-[0_4px_12px_rgba(212,178,84,0.3)] hover:shadow-[0_6px_20px_rgba(212,178,84,0.4)] transform hover:-translate-y-1 uppercase tracking-wide"
+          >
+            {isLoggedIn ? 'ACCÉDER À MON ESPACE' : 'COMMENCER À JOUER'}
+          </button>
         </div>
       </section>
 
@@ -282,16 +272,16 @@ export default function Home() {
           <div className="border-t border-white/20 mt-12 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
               <div className="flex flex-wrap justify-center md:justify-start space-x-6">
-                <Link href="#" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
+                <Link href="/legal" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
                   Mentions Légales
                 </Link>
-                <Link href="#" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
+                <Link href="/legal/rgpd" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
                   Politique de Confidentialité
                 </Link>
-                <Link href="#" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
-                  CGV
+                <Link href="/legal/cgu" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
+                  CGU
                 </Link>
-                <Link href="#" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
+                <Link href="/legal/rgpd" className="text-white/60 hover:text-[#D4B254] transition-colors font-['Lato'] text-sm">
                   Cookies
                 </Link>
               </div>

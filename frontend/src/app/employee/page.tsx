@@ -1,86 +1,150 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Navigation from '../../components/Navigation';
+
+interface User {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+}
+
+interface UnclaimedPrize {
+  id: string;
+  user: User;
+  gain: {
+    name: string;
+    value: number;
+  };
+  code: {
+    code: string;
+  };
+  participationDate: string;
+}
+
+interface ClaimedPrize {
+  id: string;
+  user: User;
+  gain: {
+    name: string;
+    value: number;
+  };
+  code: {
+    code: string;
+  };
+  participationDate: string;
+  claimedAt: string;
+}
+
+interface EmployeeStats {
+  todayClaimed: number;
+  thisWeekClaimed: number;
+  totalClaimed: number;
+}
 
 export default function EmployeePage() {
   const [activeTab, setActiveTab] = useState('unclaimed');
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [employeeStats, setEmployeeStats] = useState<EmployeeStats | null>(null);
+  const [unclaimedPrizes, setUnclaimedPrizes] = useState<UnclaimedPrize[]>([]);
+  const [claimedPrizes, setClaimedPrizes] = useState<ClaimedPrize[]>([]);
+  const [user, setUser] = useState<any>(null);
 
-  // Mock data - replace with real data from API
-  const employeeStats = {
-    todayClaimed: 12,
-    thisWeekClaimed: 45,
-    totalClaimed: 287
+  useEffect(() => {
+    // Check employee authentication
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (!token || !userData) {
+      window.location.href = '/auth';
+      return;
+    }
+
+    try {
+      const parsedUser = JSON.parse(userData);
+      if (parsedUser.role !== 'EMPLOYEE' && parsedUser.role !== 'ADMIN') {
+        alert('Accès refusé. Vous devez être employé ou administrateur.');
+        window.location.href = '/';
+        return;
+      }
+      setUser(parsedUser);
+      loadEmployeeData(token);
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      window.location.href = '/auth';
+    }
+  }, []);
+
+  const loadEmployeeData = async (token: string) => {
+    try {
+      // Load employee stats
+      const statsResponse = await fetch('http://localhost:3002/api/employee/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (statsResponse.ok) {
+        const stats = await statsResponse.json();
+        setEmployeeStats(stats);
+      }
+
+      // Load unclaimed prizes
+      const unclaimedResponse = await fetch('http://localhost:3002/api/employee/unclaimed-prizes', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (unclaimedResponse.ok) {
+        const unclaimed = await unclaimedResponse.json();
+        setUnclaimedPrizes(unclaimed);
+      }
+
+      // Load claimed prizes history
+      const claimedResponse = await fetch('http://localhost:3002/api/employee/claimed-prizes', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (claimedResponse.ok) {
+        const claimed = await claimedResponse.json();
+        setClaimedPrizes(claimed);
+      }
+    } catch (error) {
+      console.error('Error loading employee data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const unclaimedPrizes = [
-    {
-      id: 1,
-      user: { name: 'Marie Dubois', email: 'marie@email.com', phone: '06 12 34 56 78' },
-      prize: 'Infuseur à thé',
-      value: 8,
-      code: 'ABC123XYZ0',
-      date: '2024-01-20',
-      icon: '🫖'
-    },
-    {
-      id: 2,
-      user: { name: 'Pierre Martin', email: 'pierre@email.com', phone: '06 23 45 67 89' },
-      prize: 'Coffret découverte 39€',
-      value: 39,
-      code: 'DEF456UVW1',
-      date: '2024-01-19',
-      icon: '🎁'
-    },
-    {
-      id: 3,
-      user: { name: 'Sophie Laurent', email: 'sophie@email.com', phone: '06 34 56 78 90' },
-      prize: 'Thé signature 100g',
-      value: 18,
-      code: 'GHI789RST2',
-      date: '2024-01-18',
-      icon: '⭐'
-    },
-    {
-      id: 4,
-      user: { name: 'Jean Moreau', email: 'jean@email.com', phone: '06 45 67 89 01' },
-      prize: 'Coffret premium 69€',
-      value: 69,
-      code: 'JKL012MNO3',
-      date: '2024-01-17',
-      icon: '🏆'
-    }
-  ];
 
-  const claimedPrizes = [
-    {
-      id: 5,
-      user: { name: 'Claire Bernard', email: 'claire@email.com', phone: '06 56 78 90 12' },
-      prize: 'Thé détox 100g',
-      value: 12,
-      code: 'PQR345STU4',
-      participationDate: '2024-01-15',
-      claimedDate: '2024-01-20',
-      claimedTime: '14:30',
-      icon: '🍃'
-    },
-    {
-      id: 6,
-      user: { name: 'Luc Petit', email: 'luc@email.com', phone: '06 67 89 01 23' },
-      prize: 'Infuseur à thé',
-      value: 8,
-      code: 'VWX678YZA5',
-      participationDate: '2024-01-14',
-      claimedDate: '2024-01-19',
-      claimedTime: '16:45',
-      icon: '🫖'
-    }
-  ];
+  const handleClaimPrize = async (prizeId: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
-  const handleClaimPrize = (prizeId: number) => {
-    // Handle prize claiming logic
-    console.log('Claiming prize:', prizeId);
-    // This would typically make an API call to mark the prize as claimed
+    try {
+      const response = await fetch(`http://localhost:3002/api/employee/claim-prize/${prizeId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        alert('Prix remis avec succès !');
+        loadEmployeeData(token); // Reload data
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Erreur lors de la remise du prix');
+      }
+    } catch (error) {
+      console.error('Error claiming prize:', error);
+      alert('Erreur lors de la remise du prix');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -91,44 +155,43 @@ export default function EmployeePage() {
     });
   };
 
-  const filteredUnclaimedPrizes = unclaimedPrizes.filter(prize =>
-    prize.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prize.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prize.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUnclaimedPrizes = unclaimedPrizes.filter(prize => {
+    const fullName = `${prize.user.firstName} ${prize.user.lastName}`;
+    return fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           prize.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           prize.code.code.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
-  const filteredClaimedPrizes = claimedPrizes.filter(prize =>
-    prize.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prize.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prize.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredClaimedPrizes = claimedPrizes.filter(prize => {
+    const fullName = `${prize.user.firstName} ${prize.user.lastName}`;
+    return fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           prize.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           prize.code.code.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  const getPrizeIcon = (prizeName: string) => {
+    if (prizeName.toLowerCase().includes('infuseur')) return '🫖';
+    if (prizeName.toLowerCase().includes('coffret')) return '🎁';
+    if (prizeName.toLowerCase().includes('signature')) return '⭐';
+    if (prizeName.toLowerCase().includes('détox')) return '🍃';
+    if (prizeName.toLowerCase().includes('premium')) return '🏆';
+    return '🍵';
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2C5545] mx-auto mb-4"></div>
+          <p className="text-[#2C5545] font-['Lato']">Chargement des données employé...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl">🍃</span>
-                <h1 className="font-['Playfair_Display'] text-2xl font-bold text-[#2C5545]">Thé Tip Top</h1>
-              </div>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <span className="font-['Lato'] text-lg text-gray-600">Interface Employé</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <div className="font-['Lato'] font-medium text-[#2C5545]">Employé Boutique</div>
-                <div className="text-sm text-gray-500">Nice Centre</div>
-              </div>
-              <div className="w-10 h-10 bg-[#D4B254] rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">E</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Cards */}
@@ -140,9 +203,9 @@ export default function EmployeePage() {
               </div>
               <div>
                 <div className="font-['Playfair_Display'] text-2xl font-bold text-[#2C5545]">
-                  {employeeStats.todayClaimed}
+                  {employeeStats?.todayClaimed || 0}
                 </div>
-                <div className="font-['Lato'] text-sm text-gray-600">Prix remis aujourd'hui</div>
+                <div className="font-['Lato'] text-sm text-gray-600">Prix remis aujourd&apos;hui</div>
               </div>
             </div>
           </div>
@@ -154,7 +217,7 @@ export default function EmployeePage() {
               </div>
               <div>
                 <div className="font-['Playfair_Display'] text-2xl font-bold text-[#2C5545]">
-                  {employeeStats.thisWeekClaimed}
+                  {employeeStats?.thisWeekClaimed || 0}
                 </div>
                 <div className="font-['Lato'] text-sm text-gray-600">Prix remis cette semaine</div>
               </div>
@@ -168,7 +231,7 @@ export default function EmployeePage() {
               </div>
               <div>
                 <div className="font-['Playfair_Display'] text-2xl font-bold text-[#D4B254]">
-                  {employeeStats.totalClaimed}
+                  {employeeStats?.totalClaimed || 0}
                 </div>
                 <div className="font-['Lato'] text-sm text-gray-600">Total prix remis</div>
               </div>
@@ -184,7 +247,7 @@ export default function EmployeePage() {
               placeholder="Rechercher par nom, email ou code..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-12 pl-10 pr-4 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors"
+              className="w-full h-12 pl-10 pr-4 border-2 border-gray-200 rounded-lg font-['Lato'] focus:border-[#D4B254] focus:outline-none transition-colors text-black"
             />
             <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
               🔍
@@ -238,20 +301,20 @@ export default function EmployeePage() {
                     <div className="flex items-center space-x-6">
                       {/* Prize Icon */}
                       <div className="w-16 h-16 bg-[#F5F1E6] rounded-xl flex items-center justify-center text-2xl">
-                        {prize.icon}
+                        {getPrizeIcon(prize.gain.name)}
                       </div>
 
                       {/* Prize Info */}
                       <div>
                         <h3 className="font-['Lato'] font-bold text-lg text-[#2C5545] mb-1">
-                          {prize.prize}
+                          {prize.gain.name}
                         </h3>
                         <div className="flex items-center space-x-4 text-sm text-gray-600 font-['Lato']">
-                          <span>Code: <span className="font-mono font-medium">{prize.code}</span></span>
+                          <span>Code: <span className="font-mono font-medium">{prize.code.code}</span></span>
                           <span>•</span>
-                          <span>Participation: {formatDate(prize.date)}</span>
+                          <span>Participation: {formatDate(prize.participationDate)}</span>
                           <span>•</span>
-                          <span className="font-bold text-[#D4B254]">{prize.value}€</span>
+                          <span className="font-bold text-[#D4B254]">{prize.gain.value}€</span>
                         </div>
                       </div>
                     </div>
@@ -270,7 +333,7 @@ export default function EmployeePage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <div className="text-xs text-gray-500 font-['Lato'] uppercase tracking-wide mb-1">Client</div>
-                        <div className="font-['Lato'] font-medium text-[#2C5545]">{prize.user.name}</div>
+                        <div className="font-['Lato'] font-medium text-[#2C5545]">{prize.user.firstName} {prize.user.lastName}</div>
                       </div>
                       <div>
                         <div className="text-xs text-gray-500 font-['Lato'] uppercase tracking-wide mb-1">Email</div>
@@ -278,7 +341,7 @@ export default function EmployeePage() {
                       </div>
                       <div>
                         <div className="text-xs text-gray-500 font-['Lato'] uppercase tracking-wide mb-1">Téléphone</div>
-                        <div className="font-['Lato'] text-gray-700">{prize.user.phone}</div>
+                        <div className="font-['Lato'] text-gray-700">{prize.user.phone || 'Non renseigné'}</div>
                       </div>
                     </div>
                   </div>
@@ -325,28 +388,28 @@ export default function EmployeePage() {
                     <tr key={prize.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-3">
-                          <span className="text-xl">{prize.icon}</span>
-                          <span className="font-['Lato'] font-medium text-[#2C5545]">{prize.prize}</span>
+                          <span className="text-xl">{getPrizeIcon(prize.gain.name)}</span>
+                          <span className="font-['Lato'] font-medium text-[#2C5545]">{prize.gain.name}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="font-['Lato'] font-medium text-gray-900">{prize.user.name}</div>
+                          <div className="font-['Lato'] font-medium text-gray-900">{prize.user.firstName} {prize.user.lastName}</div>
                           <div className="text-sm text-gray-500">{prize.user.email}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-gray-900">
-                        {prize.code}
+                        {prize.code.code}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-['Lato'] text-sm text-gray-500">
                         {formatDate(prize.participationDate)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-['Lato'] text-sm text-gray-900">
-                        <div>{formatDate(prize.claimedDate)}</div>
-                        <div className="text-xs text-gray-500">{prize.claimedTime}</div>
+                        <div>{formatDate(prize.claimedAt)}</div>
+                        <div className="text-xs text-gray-500">{new Date(prize.claimedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-['Lato'] font-bold text-[#D4B254]">{prize.value}€</span>
+                        <span className="font-['Lato'] font-bold text-[#D4B254]">{prize.gain.value}€</span>
                       </td>
                     </tr>
                   ))}

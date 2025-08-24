@@ -27,8 +27,8 @@ export class ParticipationController {
       const result = await this.codeService.participateWithCode(
         userId,
         code,
-        ipAddress,
-        userAgent
+        ipAddress || '',
+        userAgent || ''
       );
 
       res.status(HTTP_STATUS.OK).json({

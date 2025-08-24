@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { User, Role } from '@prisma/client';
 import prisma from '../config/database';
 import { EmailService } from './email.service';
@@ -56,7 +56,7 @@ export class AuthService {
         email,
         password: hashedPassword,
         ...otherData,
-        role: userData.role || Role.CLIENT
+        role: 'CLIENT' as Role,
       }
     });
 
@@ -247,8 +247,8 @@ export class AuthService {
         email: user.email,
         role: user.role
       },
-      process.env.JWT_SECRET!,
-      { expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRY }
+      process.env.JWT_SECRET as string,
+      { expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRY } as SignOptions
     );
   }
 
@@ -258,24 +258,24 @@ export class AuthService {
         userId: user.id,
         email: user.email
       },
-      process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRY }
+      process.env.JWT_REFRESH_SECRET as string,
+      { expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRY } as SignOptions
     );
   }
 
   private generateEmailVerificationToken(userId: string, email: string): string {
     return jwt.sign(
       { userId, email, type: 'email_verification' },
-      process.env.JWT_SECRET!,
-      { expiresIn: JWT_CONFIG.EMAIL_VERIFICATION_EXPIRY }
+      process.env.JWT_SECRET as string,
+      { expiresIn: JWT_CONFIG.EMAIL_VERIFICATION_EXPIRY } as SignOptions
     );
   }
 
   private generatePasswordResetToken(userId: string, email: string): string {
     return jwt.sign(
       { userId, email, type: 'password_reset' },
-      process.env.JWT_SECRET!,
-      { expiresIn: JWT_CONFIG.PASSWORD_RESET_EXPIRY }
+      process.env.JWT_SECRET as string,
+      { expiresIn: JWT_CONFIG.PASSWORD_RESET_EXPIRY } as SignOptions
     );
   }
 }

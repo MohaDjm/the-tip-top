@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import Navigation from '../../components/Navigation';
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
@@ -24,29 +24,94 @@ export default function AuthPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', formData);
+    
+    try {
+      if (activeTab === 'signin') {
+        // Login logic
+        const response = await fetch('http://localhost:3002/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Store token and redirect
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          
+          // Redirect based on user role
+          if (data.user.role === 'ADMIN') {
+            window.location.href = '/admin';
+          } else if (data.user.role === 'EMPLOYEE') {
+            window.location.href = '/employee';
+          } else {
+            window.location.href = '/dashboard';
+          }
+        } else {
+          alert(data.message || 'Erreur de connexion');
+        }
+      } else {
+        // Registration logic
+        if (formData.password !== formData.confirmPassword) {
+          alert('Les mots de passe ne correspondent pas');
+          return;
+        }
+
+        const response = await fetch('http://localhost:3002/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            phone: '',
+            address: '',
+            city: '',
+            postalCode: '',
+            dateOfBirth: '1990-01-01'
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
+          setActiveTab('signin');
+          setFormData({
+            email: formData.email,
+            password: '',
+            firstName: '',
+            lastName: '',
+            confirmPassword: ''
+          });
+        } else {
+          alert(data.message || 'Erreur lors de la création du compte');
+        }
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      alert('Erreur de connexion au serveur');
+    }
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Green Section */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-[#2C5545] to-[#1a3329]">
-        {/* Logo in top left */}
-        <div className="absolute top-6 left-6 z-20">
-          <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-            <Image 
-              src="/assets/images/logos/logo.png" 
-              alt="Thé Tip Top"
-              width={30}
-              height={15}
-              className="object-contain"
-            />
-            <span className="text-white text-sm font-['Playfair_Display'] font-bold">Thé Tip Top</span>
-          </Link>
-        </div>
+    <div className="min-h-screen bg-white">
+      <Navigation />
+      <div className="flex min-h-screen">
+        {/* Left Side - Green Section */}
+        <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-[#2C5545] to-[#1a3329]">
         
         {/* Centered Content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white">
@@ -268,6 +333,7 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

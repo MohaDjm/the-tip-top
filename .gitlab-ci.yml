@@ -1,0 +1,56 @@
+stages:
+  - build
+  - test
+  - quality
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+
+build:
+  stage: build
+  script:
+    - docker-compose build
+  artifacts:
+    expire_in: 1 hour
+
+test:backend:
+  stage: test
+  script:
+    - cd backend
+    - npm install
+    - npm test
+  coverage: '/Coverage: \d+\.\d+%/'
+
+test:frontend:
+  stage: test
+  script:
+    - cd frontend
+    - npm install
+    - npm test
+
+sonarqube:
+  stage: quality
+  image: sonarsource/sonar-scanner-cli
+  script:
+    - sonar-scanner
+
+deploy:staging:
+  stage: deploy
+  script:
+    - docker-compose up -d
+  environment:
+    name: staging
+  only:
+    - develop
+
+deploy:production:
+  stage: deploy
+  script:
+    - docker-compose -f docker-compose.prod.yml up -d
+  environment:
+    name: production
+  only:
+    - main
+  when: manual

@@ -24,9 +24,8 @@ async function generateCodes() {
     // await prisma.code.deleteMany();
     // await prisma.gain.deleteMany();
 
-    // Créer les gains
-    console.log('🎁 Creating gains...');
-    const createdGains = [];
+    // Créer les gains dans la base de données
+    const createdGains: any[] = [];
     
     for (const gain of gains) {
       const quantity = Math.floor(TOTAL_CODES * gain.percentage);
