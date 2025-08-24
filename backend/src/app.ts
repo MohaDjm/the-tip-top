@@ -587,27 +587,41 @@ app.get('/api/admin/stats', authMiddleware, roleMiddleware(['ADMIN']), async (re
       }
     });
 
-    // Démographie (exemple simplifié)
-    const ageGroups = await prisma.$queryRaw`
-      SELECT 
-        CASE 
-          WHEN EXTRACT(YEAR FROM AGE(NOW(), "dateOfBirth")) < 25 THEN '18-25'
-          WHEN EXTRACT(YEAR FROM AGE(NOW(), "dateOfBirth")) < 35 THEN '26-35'
-          WHEN EXTRACT(YEAR FROM AGE(NOW(), "dateOfBirth")) < 45 THEN '36-45'
-          WHEN EXTRACT(YEAR FROM AGE(NOW(), "dateOfBirth")) < 60 THEN '46-60'
-          ELSE '60+'
-        END as age_group,
-        COUNT(*) as count
-      FROM "User"
-      JOIN "Participation" ON "User".id = "Participation"."userId"
-      GROUP BY age_group
-    `;
+    // Démographie (gestion des cas où il n'y a pas de participations)
+    let ageGroups: any[] = [];
+    try {
+      if (totalParticipations > 0) {
+        const rawAgeGroups = await prisma.$queryRaw`
+          SELECT 
+            CASE 
+              WHEN EXTRACT(YEAR FROM AGE(NOW(), "dateOfBirth")) < 25 THEN '18-25'
+              WHEN EXTRACT(YEAR FROM AGE(NOW(), "dateOfBirth")) < 35 THEN '26-35'
+              WHEN EXTRACT(YEAR FROM AGE(NOW(), "dateOfBirth")) < 45 THEN '36-45'
+              WHEN EXTRACT(YEAR FROM AGE(NOW(), "dateOfBirth")) < 60 THEN '46-60'
+              ELSE '60+'
+            END as age_group,
+            COUNT(*) as count
+          FROM "User"
+          JOIN "Participation" ON "User".id = "Participation"."userId"
+          GROUP BY age_group
+        ` as any[];
+        
+        // Convertir BigInt en Number pour éviter l'erreur de sérialisation
+        ageGroups = rawAgeGroups.map(group => ({
+          age_group: group.age_group,
+          count: Number(group.count)
+        }));
+      }
+    } catch (demographicsError) {
+      console.warn('Erreur démographie (ignorée):', demographicsError);
+      ageGroups = [];
+    }
 
     res.json({
       global: {
         totalCodes,
         usedCodes,
-        participationRate: ((usedCodes / totalCodes) * 100).toFixed(2),
+        participationRate: totalCodes > 0 ? ((usedCodes / totalCodes) * 100).toFixed(2) : '0.00',
         totalParticipations,
         claimedGains
       },
@@ -616,7 +630,7 @@ app.get('/api/admin/stats', authMiddleware, roleMiddleware(['ADMIN']), async (re
         totalQuantity: gain.quantity,
         distributed: gain._count.participations,
         remaining: gain.remainingQuantity,
-        percentage: ((gain._count.participations / gain.quantity) * 100).toFixed(2)
+        percentage: gain.quantity > 0 ? ((gain._count.participations / gain.quantity) * 100).toFixed(2) : '0.00'
       })),
       demographics: {
         ageGroups
@@ -625,6 +639,192 @@ app.get('/api/admin/stats', authMiddleware, roleMiddleware(['ADMIN']), async (re
   } catch (error) {
     console.error('Erreur statistiques:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
+  }
+});
+
+// Participations récentes pour admin
+app.get('/api/admin/recent-participations', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const recentParticipations = await prisma.participation.findMany({
+      take: 50,
+      orderBy: { participationDate: 'desc' },
+      include: {
+        user: {
+          select: { firstName: true, lastName: true, email: true }
+        },
+        code: {
+          select: { code: true }
+        },
+        gain: {
+          select: { name: true, value: true }
+        }
+      }
+    });
+
+    res.json(recentParticipations);
+  } catch (error) {
+    console.error('Erreur participations récentes:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des participations récentes' });
+  }
+});
+
+// Gains pour admin
+app.get('/api/admin/gains', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const gains = await prisma.gain.findMany({
+      include: {
+        _count: {
+          select: { participations: true }
+        }
+      }
+    });
+
+    res.json(gains);
+  } catch (error) {
+    console.error('Erreur gains:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des gains' });
+  }
+});
+
+// Toutes les participations pour admin
+app.get('/api/admin/participations', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const participations = await prisma.participation.findMany({
+      include: {
+        user: {
+          select: { firstName: true, lastName: true, email: true }
+        },
+        code: {
+          select: { code: true }
+        },
+        gain: {
+          select: { name: true, value: true }
+        }
+      },
+      orderBy: { participationDate: 'desc' }
+    });
+
+    res.json(participations);
+  } catch (error) {
+    console.error('Erreur participations:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des participations' });
+  }
+});
+
+// Utilisateurs pour admin
+app.get('/api/admin/users', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        _count: {
+          select: { participations: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(users);
+  } catch (error) {
+    console.error('Erreur utilisateurs:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs' });
+  }
+});
+
+// Stats pour employé
+app.get('/api/employee/stats', authMiddleware, roleMiddleware(['EMPLOYEE', 'ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const totalParticipations = await prisma.participation.count();
+    const claimedGains = await prisma.participation.count({ where: { isClaimed: true } });
+    const unclaimedGains = await prisma.participation.count({ where: { isClaimed: false } });
+
+    res.json({
+      totalParticipations,
+      claimedGains,
+      unclaimedGains
+    });
+  } catch (error) {
+    console.error('Erreur stats employé:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
+  }
+});
+
+// Prix non réclamés pour employé
+app.get('/api/employee/unclaimed-prizes', authMiddleware, roleMiddleware(['EMPLOYEE', 'ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const unclaimedPrizes = await prisma.participation.findMany({
+      where: { isClaimed: false },
+      include: {
+        user: {
+          select: { firstName: true, lastName: true, email: true }
+        },
+        gain: {
+          select: { name: true, value: true }
+        }
+      },
+      orderBy: { participationDate: 'desc' }
+    });
+
+    res.json(unclaimedPrizes);
+  } catch (error) {
+    console.error('Erreur prix non réclamés:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des prix non réclamés' });
+  }
+});
+
+// Prix réclamés pour employé
+app.get('/api/employee/claimed-prizes', authMiddleware, roleMiddleware(['EMPLOYEE', 'ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const claimedPrizes = await prisma.participation.findMany({
+      where: { isClaimed: true },
+      include: {
+        user: {
+          select: { firstName: true, lastName: true, email: true }
+        },
+        gain: {
+          select: { name: true, value: true }
+        }
+      },
+      orderBy: { claimedAt: 'desc' }
+    });
+
+    res.json(claimedPrizes);
+  } catch (error) {
+    console.error('Erreur prix réclamés:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des prix réclamés' });
+  }
+});
+
+// Réclamer un prix (employé)
+app.post('/api/employee/claim-prize/:participationId', authMiddleware, roleMiddleware(['EMPLOYEE', 'ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const { participationId } = req.params;
+
+    const participation = await prisma.participation.update({
+      where: { id: participationId },
+      data: { 
+        isClaimed: true,
+        claimedAt: new Date()
+      },
+      include: {
+        user: {
+          select: { firstName: true, lastName: true, email: true }
+        },
+        gain: {
+          select: { name: true, value: true }
+        }
+      }
+    });
+
+    res.json(participation);
+  } catch (error) {
+    console.error('Erreur réclamation prix:', error);
+    res.status(500).json({ error: 'Erreur lors de la réclamation du prix' });
   }
 });
 
