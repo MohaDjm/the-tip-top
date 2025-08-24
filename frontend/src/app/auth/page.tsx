@@ -87,15 +87,20 @@ export default function AuthPage() {
         const data = await response.json();
 
         if (response.ok) {
-          alert('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
-          setActiveTab('signin');
-          setFormData({
-            email: formData.email,
-            password: '',
-            firstName: '',
-            lastName: '',
-            confirmPassword: ''
-          });
+          // Store token and redirect after successful registration
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          
+          alert('Compte créé avec succès ! Bienvenue !');
+          
+          // Redirect based on user role
+          if (data.user.role === 'ADMIN') {
+            window.location.href = '/admin';
+          } else if (data.user.role === 'EMPLOYEE') {
+            window.location.href = '/employee';
+          } else {
+            window.location.href = '/dashboard';
+          }
         } else {
           alert(data.message || 'Erreur lors de la création du compte');
         }
