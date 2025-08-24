@@ -91,8 +91,6 @@ export default function AuthPage() {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           
-          alert('Compte créé avec succès ! Bienvenue !');
-          
           // Redirect based on user role
           if (data.user.role === 'ADMIN') {
             window.location.href = '/admin';
