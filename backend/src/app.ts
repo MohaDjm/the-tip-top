@@ -885,9 +885,55 @@ app.get('/api/admin/export-emails', authMiddleware, roleMiddleware(['ADMIN']), a
 // TIRAGE AU SORT FINAL
 // ===========================
 
+// Vérifier s'il y a déjà eu un tirage
+app.get('/api/admin/grand-tirage/status', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const existingDraw = await prisma.grandTirage.findFirst({
+      where: { isActive: true },
+      include: { winner: true }
+    });
+
+    const totalParticipants = await prisma.user.count({
+      where: {
+        participations: {
+          some: {}
+        }
+      }
+    });
+
+    res.json({
+      hasDrawn: !!existingDraw,
+      totalParticipants,
+      draw: existingDraw ? {
+        id: existingDraw.id,
+        winner: {
+          id: existingDraw.winner.id,
+          name: `${existingDraw.winner.firstName} ${existingDraw.winner.lastName}`,
+          email: existingDraw.winner.email
+        },
+        drawDate: existingDraw.drawDate,
+        totalParticipants: existingDraw.totalParticipants
+      } : null
+    });
+  } catch (error) {
+    console.error('Erreur statut tirage:', error);
+    res.status(500).json({ error: 'Erreur lors de la vérification du statut' });
+  }
+});
+
+// Lancer le grand tirage au sort
 app.post('/api/admin/grand-tirage', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
   try {
-    // Récupérer tous les participants uniques
+    // Vérifier s'il y a déjà eu un tirage
+    const existingDraw = await prisma.grandTirage.findFirst({
+      where: { isActive: true }
+    });
+
+    if (existingDraw) {
+      return res.status(400).json({ error: 'Un tirage au sort a déjà été effectué' });
+    }
+
+    // Récupérer tous les participants uniques (1 chance par personne)
     const participants = await prisma.user.findMany({
       where: {
         participations: {
@@ -904,16 +950,30 @@ app.post('/api/admin/grand-tirage', authMiddleware, roleMiddleware(['ADMIN']), a
     const winnerIndex = Math.floor(Math.random() * participants.length);
     const winner = participants[winnerIndex];
 
-    // Enregistrer le résultat (à créer une table spécifique si nécessaire)
-    
-    res.json({
-      winner: {
-        id: winner.id,
-        name: `${winner.firstName} ${winner.lastName}`,
-        email: winner.email
+    // Enregistrer le résultat du tirage
+    const grandTirage = await prisma.grandTirage.create({
+      data: {
+        winnerId: winner.id,
+        totalParticipants: participants.length,
+        conductedBy: req.user.id,
+        isActive: true
       },
-      totalParticipants: participants.length,
-      timestamp: new Date().toISOString()
+      include: { winner: true }
+    });
+
+    res.json({
+      success: true,
+      draw: {
+        id: grandTirage.id,
+        winner: {
+          id: winner.id,
+          name: `${winner.firstName} ${winner.lastName}`,
+          email: winner.email
+        },
+        totalParticipants: participants.length,
+        drawDate: grandTirage.drawDate,
+        conductedBy: req.user.email
+      }
     });
   } catch (error) {
     console.error('Erreur tirage au sort:', error);

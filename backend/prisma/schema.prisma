@@ -26,6 +26,7 @@ model User {
   
   participations    Participation[]
   socialAccounts    SocialAccount[]
+  grandTirageWins   GrandTirage[]
 }
 
 model Code {
@@ -77,6 +78,17 @@ model SocialAccount {
   user              User     @relation(fields: [userId], references: [id])
   
   @@unique([provider, providerAccountId])
+}
+
+model GrandTirage {
+  id                String   @id @default(uuid())
+  winnerId          String
+  totalParticipants Int
+  drawDate          DateTime @default(now())
+  conductedBy       String   // ID de l'admin qui a lancé le tirage
+  isActive          Boolean  @default(true)
+  
+  winner            User     @relation(fields: [winnerId], references: [id])
 }
 
 enum Role {

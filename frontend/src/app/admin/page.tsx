@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navigation from '../../components/Navigation';
+import GrandTirage from '../../components/GrandTirage';
 
 interface AdminStats {
   totalUsers: number;
@@ -798,62 +799,59 @@ export default function AdminPage() {
         )}
 
         {/* Codes Tab */}
-        {activeTab === 'codes' && (
+        {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Code Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Grand Tirage au Sort */}
+            <GrandTirage />
+            
+            {/* Statistiques principales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">🔢</span>
+                <div className="flex items-center">
+                  <div className="p-3 rounded-full bg-blue-100 mr-4">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
                   </div>
                   <div>
-                    <div className="font-['Playfair_Display'] text-2xl font-bold text-[#2C5545]">
-                      {codeStats?.total?.toLocaleString() || '0'}
-                    </div>
-                    <div className="font-['Lato'] text-sm text-gray-600">Codes totaux</div>
+                    <p className="text-sm font-medium text-gray-600 font-['Lato']">Utilisateurs</p>
+                    <p className="text-2xl font-bold text-gray-900 font-['Lato']">{dashboardStats?.totalUsers || 0}</p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                     <span className="text-2xl">✅</span>
                   </div>
                   <div>
-                    <div className="font-['Playfair_Display'] text-2xl font-bold text-[#2C5545]">
-                      {codeStats?.used?.toLocaleString() || '0'}
-                    </div>
-                    <div className="font-['Lato'] text-sm text-gray-600">Codes utilisés</div>
+                    <p className="text-sm font-medium text-gray-600 font-['Lato']">Participations</p>
+                    <p className="text-2xl font-bold text-gray-900 font-['Lato']">{dashboardStats?.totalParticipations || 0}</p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
                     <span className="text-2xl">📦</span>
                   </div>
                   <div>
-                    <div className="font-['Playfair_Display'] text-2xl font-bold text-[#2C5545]">
-                      {codeStats?.available?.toLocaleString() || '0'}
-                    </div>
-                    <div className="font-['Lato'] text-sm text-gray-600">Codes disponibles</div>
+                    <p className="text-sm font-medium text-gray-600 font-['Lato']">Codes totaux</p>
+                    <p className="text-2xl font-bold text-gray-900 font-['Lato']">{dashboardStats?.totalCodes || 0}</p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
                     <span className="text-2xl">📊</span>
                   </div>
                   <div>
-                    <div className="font-['Playfair_Display'] text-2xl font-bold text-[#D4B254]">
-                      {codeStats?.usageRate || '0'}%
-                    </div>
-                    <div className="font-['Lato'] text-sm text-gray-600">Taux d'utilisation</div>
+                    <p className="text-sm font-medium text-gray-600 font-['Lato']">Codes utilisés</p>
+                    <p className="text-2xl font-bold text-gray-900 font-['Lato']">{dashboardStats?.usedCodes || 0}</p>
                   </div>
                 </div>
               </div>
@@ -950,7 +948,7 @@ export default function AdminPage() {
         )}
 
         {/* Other tabs content would go here */}
-        {activeTab !== 'dashboard' && activeTab !== 'gains' && activeTab !== 'employee' && activeTab !== 'participations' && activeTab !== 'users' && activeTab !== 'codes' && (
+        {activeTab !== 'overview' && activeTab !== 'gains' && activeTab !== 'employee' && activeTab !== 'participations' && activeTab !== 'users' && activeTab !== 'codes' && (
           <div className="bg-white rounded-xl p-8 shadow-[0_2px_8px_rgba(0,0,0,0.08)] text-center">
             <div className="text-4xl mb-4">🚧</div>
             <h3 className="font-['Playfair_Display'] text-xl font-bold text-[#2C5545] mb-2">
