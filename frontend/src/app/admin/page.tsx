@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import Navigation from '@/components/Navigation';
 import { apiCall } from '@/lib/api';
+import GrandTirage from '@/components/GrandTirage';
 
 interface AdminStats {
   totalUsers: number;
