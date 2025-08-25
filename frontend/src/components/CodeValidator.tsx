@@ -9,11 +9,11 @@ interface CodeValidatorProps {
 }
 
 export default function CodeValidator({ onClose }: CodeValidatorProps) {
-  const [code, setCode] = useState('');
   const [targetPrize, setTargetPrize] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [showWheel, setShowWheel] = useState(false);
+  const [code, setCode] = useState('');
 
   const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

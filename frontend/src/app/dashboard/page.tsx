@@ -1,12 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { jwtDecode } from 'jwt-decode';
-import { apiCall } from '@/lib/api';
 import Navigation from '../../components/Navigation';
 import PrizeWheel from '../../components/PrizeWheel';
-import { API_URL } from '@/lib/api'; 
+import { apiCall } from '@/lib/api';
 
 interface User {
   id: string;
@@ -87,7 +84,7 @@ export default function DashboardPage() {
 
     try {
       // 1. Vérifier le code d'abord (sans le marquer comme utilisé)
-      const checkResponse = await fetch(`${API_URL}/participation/check-code`, {
+      const checkResponse = await apiCall('/participation/check-code', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
