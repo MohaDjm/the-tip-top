@@ -23,11 +23,13 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
+    'http://164.68.103.88',
     process.env.FRONTEND_URL
   ].filter(Boolean);
   
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
+  // Pour les requêtes via Nginx reverse proxy, accepter toutes les origines du même domaine
+  if (allowedOrigins.includes(origin) || !origin) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
   }
   
   res.header('Access-Control-Allow-Credentials', 'true');
