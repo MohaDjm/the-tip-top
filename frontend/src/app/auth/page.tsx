@@ -38,7 +38,7 @@ export default function AuthPage() {
     try {
       if (activeTab === 'signin') {
         // Login logic
-        const response = await apiCall('/auth/login', {
+        const data = await apiCall('/auth/login', {
           method: 'POST',
           body: JSON.stringify({
             email: formData.email,
@@ -46,23 +46,17 @@ export default function AuthPage() {
           }),
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-          // Store token and redirect
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          
-          // Redirect based on user role
-          if (data.user.role === 'ADMIN') {
-            window.location.href = '/admin';
-          } else if (data.user.role === 'EMPLOYEE') {
-            window.location.href = '/employee';
-          } else {
-            window.location.href = '/dashboard';
-          }
+        // Store token and redirect
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Redirect based on user role
+        if (data.user.role === 'ADMIN') {
+          window.location.href = '/admin';
+        } else if (data.user.role === 'EMPLOYEE') {
+          window.location.href = '/employee';
         } else {
-          alert(data.message || 'Erreur de connexion');
+          window.location.href = '/dashboard';
         }
       } else {
         // Registration logic
@@ -71,7 +65,7 @@ export default function AuthPage() {
           return;
         }
 
-        const response = await apiCall('/auth/register', {
+        const data = await apiCall('/auth/register', {
           method: 'POST',
           body: JSON.stringify({
             email: formData.email,
@@ -86,23 +80,17 @@ export default function AuthPage() {
           }),
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-          // Store token and redirect after successful registration
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          
-          // Redirect based on user role
-          if (data.user.role === 'ADMIN') {
-            window.location.href = '/admin';
-          } else if (data.user.role === 'EMPLOYEE') {
-            window.location.href = '/employee';
-          } else {
-            window.location.href = '/dashboard';
-          }
+        // Store token and redirect after successful registration
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Redirect based on user role
+        if (data.user.role === 'ADMIN') {
+          window.location.href = '/admin';
+        } else if (data.user.role === 'EMPLOYEE') {
+          window.location.href = '/employee';
         } else {
-          alert(data.message || 'Erreur lors de la création du compte');
+          window.location.href = '/dashboard';
         }
       }
     } catch (error) {
