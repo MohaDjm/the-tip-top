@@ -61,7 +61,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
       const token = localStorage.getItem('token');
       
       // 3. Marquer le code comme utilisé après l'animation
-      const response = await fetch('http://localhost:3002/api/participation/claim', {
+      const response = await fetch(`${API_URL}/participation/claim`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
