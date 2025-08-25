@@ -88,25 +88,17 @@ export default function AdminPage() {
   const loadAdminData = async (token: string) => {
     try {
       // Load dashboard stats
-      const response = await apiCall('/admin/stats', {
+      const response = await apiCall('/admin/dashboard/stats', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       if (response.ok) {
-        const stats = await response.json();
-        // Transform backend response to match frontend expectations
-        const transformedStats = {
-          totalUsers: stats.global?.totalUsers || 0,
-          totalParticipations: stats.global?.totalParticipations || 0,
-          totalCodes: stats.global?.totalCodes || 0,
-          usedCodes: stats.global?.usedCodes || 0,
-          claimedPrizes: stats.global?.claimedGains || 0,
-          totalValue: stats.global?.totalValue || 0
-        };
-        setDashboardStats(transformedStats);
-        console.log('Dashboard stats loaded:', stats);
-        console.log('Transformed stats:', transformedStats);
+        const result = await response.json();
+        if (result.success && result.data) {
+          setDashboardStats(result.data);
+          console.log('Dashboard stats loaded:', result.data);
+        }
       }
 
       // Load recent participations
