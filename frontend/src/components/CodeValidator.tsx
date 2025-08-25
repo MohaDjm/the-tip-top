@@ -30,7 +30,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
       const token = localStorage.getItem('token');
       
       // 1. Vérifier le code et récupérer le gain (sans marquer comme utilisé)
-      const response = await fetch(`${API_URL}/participation/check-code`, {
+      const response = await fetch(`${API_URL}/participation/validate-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,11 +42,11 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de la vérification du code');
+        throw new Error(data.message || 'Erreur lors de la vérification du code');
       }
 
       // 2. Définir le gain cible et afficher la roue
-      setTargetPrize(data.gain.name);
+      setTargetPrize(data.data.prize);
       setShowWheel(true);
       
     } catch (err: unknown) {
