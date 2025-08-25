@@ -8,6 +8,13 @@ const nextConfig = {
   poweredByHeader: false,
   generateEtags: true,
   
+  // Configuration pour production avec nginx reverse proxy
+  ...(process.env.NODE_ENV === 'production' && {
+    assetPrefix: '',
+    basePath: '',
+    trailingSlash: false,
+  }),
+  
   // Optimisation bundle
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
