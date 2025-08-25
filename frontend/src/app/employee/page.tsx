@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { jwtDecode } from 'jwt-decode';
 import { apiCall } from '@/lib/api';
+import Navigation from '@/components/Navigation';
 
 interface User {
   firstName: string;
@@ -52,7 +51,7 @@ export default function EmployeePage() {
   const [employeeStats, setEmployeeStats] = useState<EmployeeStats | null>(null);
   const [unclaimedPrizes, setUnclaimedPrizes] = useState<UnclaimedPrize[]>([]);
   const [claimedPrizes, setClaimedPrizes] = useState<ClaimedPrize[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     // Check employee authentication
