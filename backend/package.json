@@ -62,6 +62,3 @@
     "typescript": "^5.7.2"
   }
 }
-curl -X POST http://localhost:3002/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@thetiptop.fr","password":"TestPassword123!"}'
