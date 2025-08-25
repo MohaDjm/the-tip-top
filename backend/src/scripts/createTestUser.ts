@@ -75,7 +75,6 @@ async function createTestUser() {
     }
   } finally {
     await prisma.$disconnect();
-  }
 }
 
 createTestUser();
