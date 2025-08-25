@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 
 interface Winner {
   id: string;
@@ -23,7 +22,6 @@ interface DrawStatus {
 }
 
 export default function GrandTirage() {
-  const { data: session } = useSession();
   const [status, setStatus] = useState<DrawStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -31,11 +29,14 @@ export default function GrandTirage() {
 
   // Charger le statut du tirage
   const loadStatus = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
     try {
       setIsLoading(true);
       const response = await fetch('/api/admin/grand-tirage/status', {
         headers: {
-          'Authorization': `Bearer ${session?.accessToken}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -58,6 +59,9 @@ export default function GrandTirage() {
       return;
     }
 
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       setIsDrawing(true);
       setError(null);
@@ -65,7 +69,7 @@ export default function GrandTirage() {
       const response = await fetch('/api/admin/grand-tirage', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session?.accessToken}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -93,10 +97,11 @@ export default function GrandTirage() {
   };
 
   useEffect(() => {
-    if (session?.accessToken) {
+    const token = localStorage.getItem('token');
+    if (token) {
       loadStatus();
     }
-  }, [session]);
+  }, []);
 
   if (isLoading) {
     return (
