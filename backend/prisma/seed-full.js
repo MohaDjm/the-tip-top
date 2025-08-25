@@ -134,8 +134,9 @@ async function main() {
 
   // Create codes
   const codes = []
-  for (let i = 1; i <= 500; i++) {
-    const codeValue = `TEST${i.toString().padStart(6, '0')}`
+  console.log('🎫 Generating 500,000 codes... This may take a few minutes.')
+  for (let i = 1; i <= 500000; i++) {
+    const codeValue = `TEST${i.toString().padStart(7, '0')}`
     const existingCode = await prisma.code.findUnique({
       where: { code: codeValue }
     })
