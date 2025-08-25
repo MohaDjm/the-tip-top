@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Navigation from '../../components/Navigation';
-import PrizeWheel from '../../components/PrizeWheel'; 
+import PrizeWheel from '../../components/PrizeWheel';
+import { API_URL } from '@/lib/api'; 
 
 interface User {
   id: string;
@@ -89,7 +90,7 @@ export default function DashboardPage() {
 
     try {
       // 1. Vérifier le code d'abord (sans le marquer comme utilisé)
-      const checkResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/participation/check-code`, {
+      const checkResponse = await fetch(`${API_URL}/participation/check-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

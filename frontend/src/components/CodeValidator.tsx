@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import PrizeWheel from './PrizeWheel';
+import { API_URL } from '@/lib/api';
 
 interface CodeValidatorProps {
   onClose?: () => void;
@@ -29,7 +30,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
       const token = localStorage.getItem('token');
       
       // 1. Vérifier le code et récupérer le gain (sans marquer comme utilisé)
-      const response = await fetch('http://localhost:3002/api/participation/check-code', {
+      const response = await fetch(`${API_URL}/participation/check-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
