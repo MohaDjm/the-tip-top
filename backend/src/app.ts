@@ -17,15 +17,37 @@ const app = express();
 const prisma = new PrismaClient();
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
+// Configuration CORS globale
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    process.env.FRONTEND_URL
+  ].filter(Boolean);
+  
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
 // Middleware de sécurité
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // Protection CSRF
 const csrfProtection = csrf({ cookie: true });
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
-  credentials: true
-}));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -132,6 +154,7 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
 });
 
 // Connexion
+
 app.post('/api/auth/login', async (req: Request, res: Response) => {
   try {
     console.log('🔐 Login attempt:', { email: req.body.email, hasPassword: !!req.body.password });
@@ -621,13 +644,25 @@ app.get('/api/admin/stats', authMiddleware, roleMiddleware(['ADMIN']), async (re
       ageGroups = [];
     }
 
+    // Compter les utilisateurs
+    const totalUsers = await prisma.user.count();
+    
+    // Calculer la valeur totale distribuée
+    const claimedParticipations = await prisma.participation.findMany({
+      where: { isClaimed: true },
+      include: { gain: true }
+    });
+    const totalValue = claimedParticipations.reduce((sum, p) => sum + Number(p.gain.value), 0);
+
     res.json({
       global: {
+        totalUsers,
         totalCodes,
         usedCodes,
         participationRate: totalCodes > 0 ? ((usedCodes / totalCodes) * 100).toFixed(2) : '0.00',
         totalParticipations,
-        claimedGains
+        claimedGains,
+        totalValue
       },
       gains: gainStats.map(gain => ({
         name: gain.name,

@@ -38,7 +38,7 @@ interface Gain {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [dashboardStats, setDashboardStats] = useState<AdminStats | null>(null);
   const [recentParticipations, setRecentParticipations] = useState<RecentParticipation[]>([]);

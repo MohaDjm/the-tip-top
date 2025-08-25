@@ -7,11 +7,11 @@ const prisma = new PrismaClient();
 const TOTAL_CODES = 500000;
 
 const gains = [
-  { name: 'Infuseur à thé', value: 8, percentage: 0.60 },
-  { name: 'Boîte de 100g thé détox', value: 12, percentage: 0.20 },
-  { name: 'Boîte de 100g thé signature', value: 18, percentage: 0.10 },
-  { name: 'Coffret découverte 39€', value: 39, percentage: 0.06 },
-  { name: 'Coffret découverte 69€', value: 69, percentage: 0.04 }
+  { name: 'Infuseur à thé', value: 39, percentage: 0.60, exactCount: 300000 },
+  { name: 'Boîte de 100g thé détox ou infusion', value: 49, percentage: 0.20, exactCount: 100000 },
+  { name: 'Boîte de 100g thé signature', value: 59, percentage: 0.10, exactCount: 50000 },
+  { name: 'Coffret découverte 39€', value: 39, percentage: 0.06, exactCount: 30000 },
+  { name: 'Coffret découverte 69€', value: 69, percentage: 0.04, exactCount: 20000 }
 ];
 
 async function generateCodes() {
@@ -28,20 +28,30 @@ async function generateCodes() {
     const createdGains: any[] = [];
     
     for (const gain of gains) {
-      const quantity = Math.floor(TOTAL_CODES * gain.percentage);
+      const quantity = gain.exactCount;
       console.log(`   Creating ${gain.name}: ${quantity.toLocaleString()} codes (${(gain.percentage * 100).toFixed(1)}%)`);
       
-      const created = await prisma.gain.create({
-        data: {
-          name: gain.name,
-          value: gain.value,
-          description: `${gain.name} d'une valeur de ${gain.value}€`,
-          quantity: quantity,
-          remainingQuantity: quantity
-        }
+      // Vérifier si le gain existe déjà
+      const existingGain = await prisma.gain.findFirst({
+        where: { name: gain.name }
       });
       
-      createdGains.push({ ...created, quantity });
+      if (existingGain) {
+        console.log(`   ⚠️  Gain "${gain.name}" already exists, skipping creation`);
+        createdGains.push({ ...existingGain, quantity });
+      } else {
+        const created = await prisma.gain.create({
+          data: {
+            name: gain.name,
+            value: gain.value,
+            description: `${gain.name} d'une valeur de ${gain.value}€`,
+            quantity: quantity,
+            remainingQuantity: quantity
+          }
+        });
+        
+        createdGains.push({ ...created, quantity });
+      }
     }
 
     console.log('✅ Gains created successfully');
@@ -146,7 +156,8 @@ async function generateCodes() {
 }
 
 function generateUniqueCode(): string {
-  return crypto.randomBytes(5).toString('hex').toUpperCase();
+  // Generate 10-digit code to respect VarChar(10) limit
+  return Math.floor(Math.random() * 10000000000).toString().padStart(10, '0');
 }
 
 // Fonction utilitaire pour nettoyer la base de données (à utiliser avec précaution)
