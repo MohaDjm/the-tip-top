@@ -17,7 +17,7 @@ interface PrizeWheelProps {
 
 const prizes: Prize[] = [
   { name: 'Infuseur à thé', value: 8, color: '#2C5545', percentage: 60 }, // Vert principal du site
-  { name: 'Boîte de 100g thé détox', value: 12, color: '#8FBC8F', percentage: 20 }, // Vert clair
+  { name: 'Boîte de 100g thé détox ou infusion', value: 12, color: '#8FBC8F', percentage: 20 }, // Vert clair
   { name: 'Boîte de 100g thé signature', value: 18, color: '#F5F1E6', percentage: 10 }, // Beige du site
   { name: 'Coffret découverte 39€', value: 39, color: '#D4B254', percentage: 6 }, // Or du site
   { name: 'Coffret découverte 69€', value: 69, color: '#FFD700', percentage: 4 } // Or premium
@@ -29,6 +29,47 @@ export default function PrizeWheel({ targetPrize, onComplete, onClose }: PrizeWh
   const [showResult, setShowResult] = useState(false);
   const [readyToSpin, setReadyToSpin] = useState(true);
   const [hasSpun, setHasSpun] = useState(false);
+
+  // Auto-start animation when component mounts with targetPrize
+  React.useEffect(() => {
+    if (!targetPrize || !readyToSpin || hasSpun) return;
+    
+    console.log('🚀 Auto-starting wheel animation for:', targetPrize);
+    
+    setReadyToSpin(false);
+    setHasSpun(true);
+    setShowResult(false);
+    
+    const targetIndex = prizes.findIndex(p => p.name === targetPrize);
+    if (targetIndex === -1) {
+      console.warn(`Prize "${targetPrize}" not found in prizes array`);
+      return;
+    }
+    
+    const segmentAngle = 360 / prizes.length;
+    const centerAngle = segmentAngle * targetIndex + segmentAngle / 2;
+    const fullRotations = 5;
+    const totalRotation = fullRotations * 360 - centerAngle;
+    
+    console.log('🔄 Final rotation calculated:', totalRotation);
+    
+    const timer = setTimeout(() => {
+      setIsSpinning(true);
+      setRotation(totalRotation);
+      
+      // Show result after animation completes
+      const resultTimer = setTimeout(() => {
+        console.log('✅ Animation complete, showing result');
+        setIsSpinning(false);
+        setShowResult(true);
+        onComplete?.(targetPrize);
+      }, 4000);
+      
+      return () => clearTimeout(resultTimer);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [targetPrize]); // Removed dependencies that cause re-runs
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -76,17 +117,21 @@ export default function PrizeWheel({ targetPrize, onComplete, onClose }: PrizeWh
   const handleWheelClick = () => {
     if (!readyToSpin || hasSpun || !targetPrize) return;
     
+    console.log('🎯 Starting wheel animation for prize:', targetPrize);
+    
     setReadyToSpin(false);
     setHasSpun(true);
     setShowResult(false);
     
     const finalRotation = getTargetAngle();
+    console.log('🔄 Final rotation calculated:', finalRotation);
     
     setIsSpinning(true);
     setRotation(finalRotation);
     
     // Show result after animation completes
     setTimeout(() => {
+      console.log('✅ Animation complete, showing result');
       setIsSpinning(false);
       setShowResult(true);
       onComplete?.(targetPrize);

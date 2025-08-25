@@ -34,6 +34,7 @@ export default function DashboardPage() {
   const [participations, setParticipations] = useState<Participation[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCode, setNewCode] = useState('');
+  const [validatedCode, setValidatedCode] = useState('');
   const [showWheel, setShowWheel] = useState(false);
   const [wheelPrize, setWheelPrize] = useState('');
 
@@ -84,26 +85,34 @@ export default function DashboardPage() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
+    const codeToValidate = newCode.toUpperCase().trim();
+
     try {
-      const response = await fetch('http://localhost:3002/api/participation/validate', {
+      // 1. Vérifier le code d'abord (sans le marquer comme utilisé)
+      const checkResponse = await fetch('http://localhost:3002/api/participation/check-code', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ code: newCode.toUpperCase() }),
+        body: JSON.stringify({ code: codeToValidate }),
       });
 
-      const data = await response.json();
+      const checkData = await checkResponse.json();
 
-      if (response.ok) {
-        // Show wheel animation with the predetermined prize
-        setWheelPrize(data.gain.name);
-        setShowWheel(true);
-        setNewCode('');
-      } else {
-        alert(data.error || 'Code invalide');
+      if (!checkResponse.ok) {
+        alert(checkData.error || 'Code invalide');
+        return;
       }
+
+      // 2. Sauvegarder le code pour l'utiliser après l'animation
+      setValidatedCode(codeToValidate);
+      
+      // 3. Afficher la roue avec le gain
+      setWheelPrize(checkData.gain.name);
+      setShowWheel(true);
+      setNewCode('');
+
     } catch (error) {
       console.error('Error validating code:', error);
       alert('Erreur lors de la validation du code');
@@ -559,9 +568,41 @@ export default function DashboardPage() {
       {showWheel && (
         <PrizeWheel
           targetPrize={wheelPrize}
-          onComplete={(prize) => {
-            // Optional: handle prize completion logic
-            console.log('Prize completed:', prize);
+          onComplete={async () => {
+            try {
+              const token = localStorage.getItem('token');
+              
+              // 3. Marquer le code comme utilisé après l'animation
+              const claimResponse = await fetch('http://localhost:3002/api/participation/claim', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ code: validatedCode }),
+              });
+
+              const claimData = await claimResponse.json();
+
+              if (claimResponse.ok) {
+                console.log('Participation enregistrée:', claimData);
+                // Recharger les participations pour mettre à jour l'affichage
+                if (token) {
+                  loadParticipations(token);
+                }
+              } else {
+                console.error('Erreur lors de la réclamation:', claimData.error);
+                // Ne pas afficher d'erreur à l'utilisateur si la participation a été créée
+                if (claimData.success) {
+                  console.log('Participation créée malgré l\'erreur HTTP');
+                  if (token) {
+                    loadParticipations(token);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Erreur lors de la réclamation du gain:', error);
+            }
           }}
           onClose={() => {
             setShowWheel(false);

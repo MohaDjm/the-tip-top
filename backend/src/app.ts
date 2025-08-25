@@ -262,8 +262,8 @@ app.post('/api/participation/check-code', authMiddleware, async (req: AuthReques
   try {
     const { code } = req.body;
 
-    // Vérifier le format du code (10 caractères alphanumériques)
-    if (!/^[A-Z0-9]{10}$/.test(code)) {
+    // Vérifier le format du code (10 caractères numériques)
+    if (!/^[0-9]{10}$/.test(code)) {
       return res.status(400).json({ error: 'Format de code invalide' });
     }
 
@@ -298,14 +298,21 @@ app.post('/api/participation/check-code', authMiddleware, async (req: AuthReques
 
 // Marquer un code comme utilisé après animation (claim)
 app.post('/api/participation/claim', authMiddleware, async (req: AuthRequest, res: Response) => {
+  console.log('🎯 Début de la réclamation du code:', req.body.code);
+  
   try {
     const { code } = req.body;
     const userId = req.user.id;
 
-    // Vérifier le format du code (10 caractères alphanumériques)
-    if (!/^[A-Z0-9]{10}$/.test(code)) {
+    console.log('👤 Utilisateur ID:', userId);
+
+    // Vérifier le format du code (10 caractères numériques)
+    if (!/^[0-9]{10}$/.test(code)) {
+      console.log('❌ Format de code invalide:', code);
       return res.status(400).json({ error: 'Format de code invalide' });
     }
+
+    console.log('✅ Format de code valide');
 
     // Vérifier dans la base de données
     const codeEntry = await prisma.code.findUnique({
@@ -314,20 +321,38 @@ app.post('/api/participation/claim', authMiddleware, async (req: AuthRequest, re
     });
 
     if (!codeEntry) {
+      console.log('❌ Code non trouvé dans la base:', code);
       return res.status(404).json({ error: 'Code invalide' });
     }
 
+    console.log('✅ Code trouvé:', codeEntry.code, 'Gain:', codeEntry.gain.name);
+
     if (codeEntry.isUsed) {
+      console.log('❌ Code déjà utilisé:', code);
       return res.status(400).json({ error: 'Ce code a déjà été utilisé' });
     }
 
+    console.log('🔄 Début de la transaction...');
+
     // Créer la participation dans une transaction
     const participation = await prisma.$transaction(async (tx) => {
+      console.log('📝 Marquage du code comme utilisé...');
       // Marquer le code comme utilisé
       await tx.code.update({
         where: { id: codeEntry.id },
         data: { isUsed: true }
       });
+
+      console.log('🎟️ Création de la participation...');
+      
+      // Vérifier s'il existe déjà une participation pour ce code
+      const existingParticipation = await tx.participation.findUnique({
+        where: { codeId: codeEntry.id }
+      });
+
+      if (existingParticipation) {
+        throw new Error(`Code ${code} already has a participation`);
+      }
 
       // Créer la participation
       const newParticipation = await tx.participation.create({
@@ -341,16 +366,20 @@ app.post('/api/participation/claim', authMiddleware, async (req: AuthRequest, re
         include: { gain: true }
       });
 
+      console.log('📦 Décrémentation du stock de gains...');
       // Décrémenter le stock de gains restants
       await tx.gain.update({
         where: { id: codeEntry.gainId },
         data: { remainingQuantity: { decrement: 1 } }
       });
 
+      console.log('✅ Transaction terminée avec succès');
       return newParticipation;
     });
 
-    res.json({
+    console.log('📤 Envoi de la réponse de succès...');
+    
+    const response = {
       success: true,
       participation: {
         id: participation.id,
@@ -361,21 +390,36 @@ app.post('/api/participation/claim', authMiddleware, async (req: AuthRequest, re
         },
         participationDate: participation.participationDate
       }
-    });
+    };
+
+    console.log('✅ Réponse préparée:', response);
+    res.json(response);
+    console.log('✅ Réponse envoyée avec succès');
+    
   } catch (error) {
-    console.error('Erreur claim code:', error);
-    res.status(500).json({ error: 'Erreur lors de la réclamation du gain' });
+    console.error('❌ ERREUR dans claim code:', error);
+    if (error instanceof Error) {
+      console.error('❌ Stack trace:', error.stack);
+    }
+    
+    // S'assurer que la réponse n'a pas déjà été envoyée
+    if (!res.headersSent) {
+      console.log('📤 Envoi de la réponse d\'erreur...');
+      res.status(500).json({ error: 'Erreur lors de la réclamation du gain' });
+    } else {
+      console.log('⚠️ Headers déjà envoyés, impossible d\'envoyer une réponse d\'erreur');
+    }
   }
 });
 
 // Valider un code et participer (DEPRECATED - utiliser check-code + claim)
-app.post('/api/participation/validate', csrfProtection, authMiddleware, async (req: AuthRequest, res: Response) => {
+app.post('/api/participation/validate', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { code } = req.body;
     const userId = req.user.id;
 
-    // Vérifier le format du code (10 caractères alphanumériques)
-    if (!/^[A-Z0-9]{10}$/.test(code)) {
+    // Vérifier le format du code (10 caractères numériques)
+    if (!/^[0-9]{10}$/.test(code)) {
       return res.status(400).json({ error: 'Format de code invalide' });
     }
 
@@ -447,7 +491,11 @@ app.post('/api/participation/validate', csrfProtection, authMiddleware, async (r
     });
   } catch (error) {
     console.error('Erreur validation code:', error);
-    res.status(500).json({ error: 'Erreur lors de la validation du code' });
+    
+    // S'assurer que la réponse n'a pas déjà été envoyée
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Erreur lors de la validation du code' });
+    }
   }
 });
 
