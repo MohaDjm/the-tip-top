@@ -4,14 +4,14 @@ const getApiUrl = (): string => {
   if (typeof window !== 'undefined') {
     // Côté client - détecter l'environnement par l'URL
     if (window.location.hostname === '164.68.103.88') {
-      return 'http://164.68.103.88:3002/api';
+      return '/api'; // Utiliser le reverse proxy Nginx
     }
     return 'http://localhost:3002/api';
   }
   
   // Côté serveur - utiliser les variables d'environnement
   if (process.env.NODE_ENV === 'production') {
-    return 'http://164.68.103.88:3002/api';
+    return '/api'; // Utiliser le reverse proxy Nginx
   }
   
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api';
