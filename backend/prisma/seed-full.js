@@ -132,27 +132,43 @@ async function main() {
     }
   }
 
-  // Create codes
+  // Create codes in batches for better performance
   const codes = []
-  console.log('🎫 Generating 500,000 codes... This may take a few minutes.')
-  for (let i = 1; i <= 500000; i++) {
-    const codeValue = `TEST${i.toString().padStart(7, '0')}`
-    const existingCode = await prisma.code.findUnique({
-      where: { code: codeValue }
+  const batchSize = 1000
+  const totalCodes = 500000
+  console.log('🎫 Generating 500,000 codes in batches... This may take a few minutes.')
+  
+  for (let batch = 0; batch < Math.ceil(totalCodes / batchSize); batch++) {
+    const batchCodes = []
+    const startIndex = batch * batchSize + 1
+    const endIndex = Math.min((batch + 1) * batchSize, totalCodes)
+    
+    for (let i = startIndex; i <= endIndex; i++) {
+      const codeValue = `TEST${i.toString().padStart(7, '0')}`
+      batchCodes.push({
+        code: codeValue,
+        gainId: gains[Math.floor(Math.random() * gains.length)].id,
+        isUsed: Math.random() < 0.3, // 30% des codes sont utilisés
+      })
+    }
+    
+    // Insert batch
+    const createdCodes = await prisma.code.createMany({
+      data: batchCodes,
+      skipDuplicates: true
     })
     
-    if (!existingCode) {
-      const code = await prisma.code.create({
-        data: {
-          code: codeValue,
-          gainId: gains[Math.floor(Math.random() * gains.length)].id,
-          isUsed: Math.random() < 0.3, // 30% des codes sont utilisés
+    console.log(`✅ Batch ${batch + 1}/${Math.ceil(totalCodes / batchSize)} completed (${endIndex} codes)`)
+    
+    // Get created codes for participations
+    const batchResults = await prisma.code.findMany({
+      where: {
+        code: {
+          in: batchCodes.map(c => c.code)
         }
-      })
-      codes.push(code)
-    } else {
-      codes.push(existingCode)
-    }
+      }
+    })
+    codes.push(...batchResults)
   }
 
   // Create participations for used codes
