@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
+import { apiCall } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import Navigation from '@/components/Navigation';
-import { apiCall } from '@/lib/api';
 import GrandTirage from '@/components/GrandTirage';
 
 interface AdminStats {
@@ -224,20 +225,15 @@ export default function AdminPage() {
     if (!token) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/claim-prize/${prizeId}`, {
+      await apiCall(`/employee/claim-prize/${prizeId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
-      if (response.ok) {
-        alert('Prix remis avec succès !');
-        loadAdminData(token); // Reload data
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Erreur lors de la remise du prix');
-      }
+      alert('Prix remis avec succès !');
+      loadAdminData(token); // Reload data
     } catch (error) {
       console.error('Error claiming prize:', error);
       alert('Erreur lors de la remise du prix');

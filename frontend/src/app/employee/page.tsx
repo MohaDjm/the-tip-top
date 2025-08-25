@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Navigation from '../../components/Navigation';
+import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
+import { apiCall } from '@/lib/api';
 
 interface User {
   firstName: string;
@@ -80,40 +82,28 @@ export default function EmployeePage() {
   const loadEmployeeData = async (token: string) => {
     try {
       // Load employee stats
-      const statsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/stats`, {
+      const stats = await apiCall('/employee/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-
-      if (statsResponse.ok) {
-        const stats = await statsResponse.json();
-        setEmployeeStats(stats);
-      }
+      setEmployeeStats(stats);
 
       // Load unclaimed prizes
-      const unclaimedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/unclaimed-prizes`, {
+      const unclaimed = await apiCall('/employee/unclaimed-prizes', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-
-      if (unclaimedResponse.ok) {
-        const unclaimed = await unclaimedResponse.json();
-        setUnclaimedPrizes(unclaimed);
-      }
+      setUnclaimedPrizes(unclaimed);
 
       // Load claimed prizes history
-      const claimedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/claimed-prizes`, {
+      const claimed = await apiCall('/employee/claimed-prizes', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-
-      if (claimedResponse.ok) {
-        const claimed = await claimedResponse.json();
-        setClaimedPrizes(claimed);
-      }
+      setClaimedPrizes(claimed);
     } catch (error) {
       console.error('Error loading employee data:', error);
     } finally {
@@ -127,20 +117,15 @@ export default function EmployeePage() {
     if (!token) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/claim-prize/${prizeId}`, {
+      await apiCall(`/employee/claim-prize/${prizeId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-
-      if (response.ok) {
-        alert('Prix remis avec succès !');
-        loadEmployeeData(token); // Reload data
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Erreur lors de la remise du prix');
-      }
+      
+      alert('Prix remis avec succès !');
+      loadEmployeeData(token); // Reload data
     } catch (error) {
       console.error('Error claiming prize:', error);
       alert('Erreur lors de la remise du prix');

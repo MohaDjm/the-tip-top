@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
+import { apiCall } from '@/lib/api';
 import Navigation from '../../components/Navigation';
 import PrizeWheel from '../../components/PrizeWheel';
 import { API_URL } from '@/lib/api'; 
@@ -60,18 +63,12 @@ export default function DashboardPage() {
 
   const loadParticipations = async (token: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/participation/history`, {
+      const data = await apiCall('/participation/history', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setParticipations(data);
-      } else {
-        console.error('Failed to load participations');
-      }
+      setParticipations(data);
     } catch (error) {
       console.error('Error loading participations:', error);
     } finally {
@@ -317,7 +314,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       {/* Date Badge */}
-                      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 mb-2">
@@ -574,7 +571,7 @@ export default function DashboardPage() {
               const token = localStorage.getItem('token');
               
               // 3. Marquer le code comme utilisé après l'animation
-              const claimResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/participation/claim`, {
+              const claimResponse = await apiCall('/participation/claim', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
