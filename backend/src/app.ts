@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import csrf from 'csurf';
 import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
@@ -18,6 +19,9 @@ const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
 // Middleware de sécurité
 app.use(helmet());
+
+// Protection CSRF
+const csrfProtection = csrf({ cookie: true });
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3001',
   credentials: true
@@ -342,7 +346,7 @@ app.post('/api/participation/claim', authMiddleware, async (req: AuthRequest, re
 });
 
 // Valider un code et participer (DEPRECATED - utiliser check-code + claim)
-app.post('/api/participation/validate', authMiddleware, async (req: AuthRequest, res: Response) => {
+app.post('/api/participation/validate', csrfProtection, authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { code } = req.body;
     const userId = req.user.id;
