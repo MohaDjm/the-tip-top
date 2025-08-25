@@ -1,6 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { FaGoogle, FaFacebook, FaTwitter } from 'react-icons/fa';
+import { MdLocalCafe } from 'react-icons/md';
+import { apiCall } from '@/lib/api';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
@@ -31,11 +38,8 @@ export default function AuthPage() {
     try {
       if (activeTab === 'signin') {
         // Login logic
-        const response = await fetch('http://localhost:3002/api/auth/login', {
+        const response = await apiCall('/auth/login', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
           body: JSON.stringify({
             email: formData.email,
             password: formData.password,
@@ -67,11 +71,8 @@ export default function AuthPage() {
           return;
         }
 
-        const response = await fetch('http://localhost:3002/api/auth/register', {
+        const response = await apiCall('/auth/register', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
           body: JSON.stringify({
             email: formData.email,
             password: formData.password,

@@ -74,6 +74,8 @@ router.use('/auth', authRoutes);
 const participationRoutes = (0, express_1.Router)();
 // All participation routes require authentication and email verification
 participationRoutes.use(auth_middleware_1.authenticateToken, auth_middleware_1.requireEmailVerification, auth_middleware_1.requireClient);
+// Validate code before showing wheel (secure endpoint)
+participationRoutes.post('/validate-code', rateLimiter_middleware_1.participationLimiter, validation_middleware_1.validateParticipation, participationController.validateCode);
 participationRoutes.post('/', rateLimiter_middleware_1.participationLimiter, validation_middleware_1.validateParticipation, participationController.participate);
 participationRoutes.get('/my-participations', validation_middleware_1.validatePagination, participationController.getMyParticipations);
 participationRoutes.get('/stats', participationController.getParticipationStats);

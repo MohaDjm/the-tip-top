@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Navigation from '../../components/Navigation';
-import GrandTirage from '../../components/GrandTirage';
+import { useRouter } from 'next/navigation';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import Navigation from '@/components/Navigation';
+import { apiCall } from '@/lib/api';
 
 interface AdminStats {
   totalUsers: number;
@@ -82,14 +86,13 @@ export default function AdminPage() {
   const loadAdminData = async (token: string) => {
     try {
       // Load dashboard stats
-      const statsResponse = await fetch('http://localhost:3002/api/admin/stats', {
+      const response = await apiCall('/admin/stats', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
-
-      if (statsResponse.ok) {
-        const stats = await statsResponse.json();
+      if (response.ok) {
+        const stats = await response.json();
         // Transform backend response to match frontend expectations
         const transformedStats = {
           totalUsers: stats.global?.totalUsers || 0,
@@ -105,82 +108,75 @@ export default function AdminPage() {
       }
 
       // Load recent participations
-      const participationsResponse = await fetch('http://localhost:3002/api/admin/recent-participations', {
+      const recentParticipationsResponse = await apiCall('/admin/recent-participations', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
-
-      if (participationsResponse.ok) {
-        const participations = await participationsResponse.json();
+      if (recentParticipationsResponse.ok) {
+        const participations = await recentParticipationsResponse.json();
         setRecentParticipations(participations);
       }
 
       // Load gains
-      const gainsResponse = await fetch('http://localhost:3002/api/admin/gains', {
+      const gainsResponse = await apiCall('/admin/gains', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
-
       if (gainsResponse.ok) {
         const gainsData = await gainsResponse.json();
         setGains(gainsData);
       }
 
       // Load employee data for admin access
-      const employeeStatsResponse = await fetch('http://localhost:3002/api/employee/stats', {
+      const employeeStatsResponse = await apiCall('/employee/stats', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
-
       if (employeeStatsResponse.ok) {
         const empStats = await employeeStatsResponse.json();
         setEmployeeStats(empStats);
       }
 
-      const unclaimedResponse = await fetch('http://localhost:3002/api/employee/unclaimed-prizes', {
+      const unclaimedResponse = await apiCall('/employee/unclaimed-prizes', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
-
       if (unclaimedResponse.ok) {
         const unclaimed = await unclaimedResponse.json();
         setUnclaimedPrizes(unclaimed);
       }
 
-      const claimedResponse = await fetch('http://localhost:3002/api/employee/claimed-prizes', {
+      const claimedResponse = await apiCall('/employee/claimed-prizes', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
-
       if (claimedResponse.ok) {
         const claimed = await claimedResponse.json();
         setClaimedPrizes(claimed);
       }
 
       // Load participations
-      const allParticipationsResponse = await fetch('http://localhost:3002/api/admin/participations', {
+      const participationsResponse = await apiCall('/admin/participations', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
-
-      if (allParticipationsResponse.ok) {
-        const participationsData = await allParticipationsResponse.json();
+      if (participationsResponse.ok) {
+        const participationsData = await participationsResponse.json();
         setParticipations(participationsData || []);
       }
 
       // Load users
-      const usersResponse = await fetch('http://localhost:3002/api/admin/users', {
+      const usersResponse = await apiCall('/admin/users', {
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
-
       if (usersResponse.ok) {
         const usersData = await usersResponse.json();
         setUsers(usersData || []);
@@ -227,7 +223,7 @@ export default function AdminPage() {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://localhost:3002/api/employee/claim-prize/${prizeId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/claim-prize/${prizeId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

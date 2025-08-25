@@ -193,6 +193,17 @@ class CodeService {
             unclaimedPrizes
         };
     }
+    async getUserTodayParticipation(userId, today, tomorrow) {
+        return database_1.default.participation.findFirst({
+            where: {
+                userId,
+                participationDate: {
+                    gte: today,
+                    lt: tomorrow
+                }
+            }
+        });
+    }
     async getCodeByString(codeString) {
         return database_1.default.code.findUnique({
             where: { code: codeString },

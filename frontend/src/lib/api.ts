@@ -1,0 +1,46 @@
+// Configuration API centralisée
+const getApiUrl = (): string => {
+  // Vérifier d'abord si on est côté client
+  if (typeof window !== 'undefined') {
+    // Côté client - détecter l'environnement par l'URL
+    if (window.location.hostname === '164.68.103.88') {
+      return 'http://164.68.103.88:3002/api';
+    }
+    return 'http://localhost:3002/api';
+  }
+  
+  // Côté serveur - utiliser les variables d'environnement
+  if (process.env.NODE_ENV === 'production') {
+    return 'http://164.68.103.88:3002/api';
+  }
+  
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api';
+};
+
+export const API_URL = getApiUrl();
+
+// Fonction helper pour les appels API
+export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
+  const url = `${API_URL}${endpoint}`;
+  
+  const defaultOptions: RequestInit = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    ...options,
+  };
+
+  try {
+    const response = await fetch(url, defaultOptions);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API call failed:', error);
+    throw error;
+  }
+};

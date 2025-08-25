@@ -31,6 +31,7 @@ export declare class CodeService {
         };
     }>;
     getUserParticipationStats(userId: string): Promise<ParticipationStats>;
+    getUserTodayParticipation(userId: string, today: Date, tomorrow: Date): Promise<Participation | null>;
     getCodeByString(codeString: string): Promise<Code & {
         gain: Gain;
     } | null>;

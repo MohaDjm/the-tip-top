@@ -59,7 +59,7 @@ export default function DashboardPage() {
 
   const loadParticipations = async (token: string) => {
     try {
-      const response = await fetch('http://localhost:3002/api/participation/history', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/participation/history`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -89,7 +89,7 @@ export default function DashboardPage() {
 
     try {
       // 1. Vérifier le code d'abord (sans le marquer comme utilisé)
-      const checkResponse = await fetch('http://localhost:3002/api/participation/check-code', {
+      const checkResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/participation/check-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -573,7 +573,7 @@ export default function DashboardPage() {
               const token = localStorage.getItem('token');
               
               // 3. Marquer le code comme utilisé après l'animation
-              const claimResponse = await fetch('http://localhost:3002/api/participation/claim', {
+              const claimResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/participation/claim`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',

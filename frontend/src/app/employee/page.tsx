@@ -80,7 +80,7 @@ export default function EmployeePage() {
   const loadEmployeeData = async (token: string) => {
     try {
       // Load employee stats
-      const statsResponse = await fetch('http://localhost:3002/api/employee/stats', {
+      const statsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -92,7 +92,7 @@ export default function EmployeePage() {
       }
 
       // Load unclaimed prizes
-      const unclaimedResponse = await fetch('http://localhost:3002/api/employee/unclaimed-prizes', {
+      const unclaimedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/unclaimed-prizes`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -104,7 +104,7 @@ export default function EmployeePage() {
       }
 
       // Load claimed prizes history
-      const claimedResponse = await fetch('http://localhost:3002/api/employee/claimed-prizes', {
+      const claimedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/claimed-prizes`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -127,7 +127,7 @@ export default function EmployeePage() {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://localhost:3002/api/employee/claim-prize/${prizeId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employee/claim-prize/${prizeId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
