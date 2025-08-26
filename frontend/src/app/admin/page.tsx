@@ -44,16 +44,16 @@ export default function AdminPage() {
   const [dashboardStats, setDashboardStats] = useState<AdminStats | null>(null);
   const [recentParticipations, setRecentParticipations] = useState<RecentParticipation[]>([]);
   const [gains, setGains] = useState<Gain[]>([]);
-  const [user, setUser] = useState<any>(null);
-  const [employeeStats, setEmployeeStats] = useState<any>(null);
-  const [unclaimedPrizes, setUnclaimedPrizes] = useState<any[]>([]);
-  const [claimedPrizes, setClaimedPrizes] = useState<any[]>([]);
-  const [participations, setParticipations] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [user] = useState<Record<string, unknown> | null>(null);
+  const [employeeStats, setEmployeeStats] = useState<Record<string, unknown> | null>(null);
+  const [unclaimedPrizes, setUnclaimedPrizes] = useState<Record<string, unknown>[]>([]);
+  const [claimedPrizes, setClaimedPrizes] = useState<Record<string, unknown>[]>([]);
+  const [participations, setParticipations] = useState<Record<string, unknown>[]>([]);
+  const [users, setUsers] = useState<Record<string, unknown>[]>([]);
   const [participationFilters, setParticipationFilters] = useState({ status: '', gainId: '' });
   const [userFilters, setUserFilters] = useState({ role: '' });
-  const [codes, setCodes] = useState<any[]>([]);
-  const [codeStats, setCodeStats] = useState<any>(null);
+  const [codes] = useState<Record<string, unknown>[]>([]);
+  const [codeStats, setCodeStats] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     // Check admin authentication
