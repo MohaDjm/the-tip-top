@@ -38,6 +38,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         },
         body: JSON.stringify({ code: code.toUpperCase().trim() })
       });
+
       let data;
       try {
         data = await response.json();
@@ -45,6 +46,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         // Gestion des réponses non-JSON (très rare mais possible)
         throw new Error('Erreur serveur : réponse invalide');
       }
+
       if (!response.ok) {
         throw new Error(data?.error || data?.message || 'Erreur lors de la vérification du code');
       }
@@ -53,7 +55,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
       setTargetPrize(data.gain?.name || data.prize);
       setShowWheel(true);
       
-    } catch (err: unknown) 
+    } catch (err: unknown) {
       const errorMessage = err instanceof Error 
         ? err.message 
         : 'Erreur de validation du code';
