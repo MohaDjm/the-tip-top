@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import PrizeWheel from './PrizeWheel';
-import { API_URL } from '@/lib/api';
+import { apiCall } from '@/lib/api';
 
 interface CodeValidatorProps {
   onClose?: () => void;
@@ -32,46 +32,18 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         throw new Error('Vous devez être connecté pour valider un code');
       }
       
-      console.log('DEBUG: Appel API vers:', `${API_URL}/participation/check-code`);
+      console.log('DEBUG: Appel API vers:', `/participation/check-code`);
       console.log('DEBUG: Code envoyé:', code.trim());
       
-      const response = await fetch(`${API_URL}/participation/check-code`, {
+      const data = await apiCall('/participation/check-code', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ code: code.trim() })
       });
 
-      console.log('DEBUG: Response reçue:', response);
-      console.log('DEBUG: Response status:', response.status);
-      console.log('DEBUG: Response headers:', Object.fromEntries(response.headers.entries()));
-
-      // Vérification critique pour éviter l'erreur "e.json is not a function"
-      if (!response) {
-        throw new Error('Aucune réponse du serveur');
-      }
-
-      // Vérifier le type de contenu
-      const contentType = response.headers.get('content-type');
-      if (!contentType?.includes('application/json')) {
-        const textResponse = await response.text();
-        throw new Error(`Réponse serveur invalide: ${textResponse || 'Format non-JSON'}`);
-      }
-
-      // Parser le JSON de manière sécurisée
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        throw new Error('Impossible de parser la réponse du serveur');
-      }
-
-      if (!response.ok) {
-        const errorMsg = data?.error || data?.message || `Erreur ${response.status}`;
-        throw new Error(errorMsg);
-      }
+      console.log('DEBUG: Data reçue:', data);
 
       // Vérifier la structure de la réponse
       if (!data || typeof data !== 'object') {
@@ -115,40 +87,13 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         return;
       }
       
-      const response = await fetch(`${API_URL}/participation/claim`, {
+      const data = await apiCall('/participation/claim', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ code: code.trim() })
       });
-
-      if (!response) {
-        console.error('Aucune réponse lors de la réclamation');
-        return;
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType?.includes('application/json')) {
-        const textResponse = await response.text();
-        console.error('Réponse non-JSON lors de la réclamation:', textResponse);
-        return;
-      }
-
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        console.error('Impossible de parser la réponse de réclamation');
-        return;
-      }
-
-      if (!response.ok) {
-        const errorMsg = data?.error || data?.message || `Erreur ${response.status}`;
-        console.error('Erreur lors de la réclamation:', errorMsg);
-        return;
-      }
 
       console.log('Participation enregistrée avec succès:', data);
       
