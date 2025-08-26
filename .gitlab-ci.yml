@@ -3,7 +3,7 @@ stages:
   - deploy
 
 variables:
-  PROJECT_PATH: "/root/the-tip-top"
+  PROJECT_PATH: "/home/gitlab-runner/the-tip-top"
 
 build:
   stage: build
@@ -11,10 +11,13 @@ build:
     - deploy
     - shell
   script:
-    - cd $PROJECT_PATH/frontend
+    - git clone https://gitlab.com/MohaDjm/the-tip-top.git $PROJECT_PATH || true
+    - cd $PROJECT_PATH
+    - git pull origin main
+    - cd frontend
     - npm install
     - npm run build
-    - cd $PROJECT_PATH/backend
+    - cd ../backend
     - npm install
     - npm run build
   only:
