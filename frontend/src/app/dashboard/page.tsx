@@ -103,8 +103,12 @@ export default function DashboardPage() {
 
     } catch (error) {
       console.error('Error validating code:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la validation du code';
-      alert(errorMessage);
+      // Ne pas afficher d'alert pour toutes les erreurs - laisser la roue gérer les codes valides
+      if (error instanceof Error && error.message.includes('déjà été utilisé')) {
+        alert(error.message);
+      } else {
+        console.log('Code validation failed, but not showing alert - might be valid code');
+      }
     }
   };
 
