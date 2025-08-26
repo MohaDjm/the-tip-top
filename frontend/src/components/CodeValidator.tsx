@@ -39,20 +39,14 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         body: JSON.stringify({ code: code.toUpperCase().trim() })
       });
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        // Gestion des réponses non-JSON (très rare mais possible)
-        throw new Error('Erreur serveur : réponse invalide');
-      }
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data?.error || data?.message || 'Erreur lors de la vérification du code');
       }
 
       // 2. Définir le gain cible et afficher la roue
-      setTargetPrize(data.gain?.name || data.prize);
+      setTargetPrize(data.gain?.name || data.prize || 'Aucun gain');
       setShowWheel(true);
       
     } catch (err: unknown) {
