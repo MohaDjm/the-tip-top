@@ -39,14 +39,29 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         body: JSON.stringify({ code: code.toUpperCase().trim() })
       });
 
-      // SECURITÉ MAXIMUM : Vérifier si la réponse est utilisable
-      if (!response.headers.get('content-type')?.includes('application/json')) {
+      // CORRECTION CRITIQUE : Vérifier si la réponse a un corps
+      const contentType = response.headers.get('content-type');
+      const contentLength = response.headers.get('content-length');
+      
+      // Cas 1: Réponse vide (erreur backend critique)
+      if (contentLength === '0' || (contentLength === null && response.status !== 204)) {
+        throw new Error('Erreur serveur : réponse vide');
+      }
+      
+      // Cas 2: Réponse non-JSON
+      if (!contentType?.includes('application/json')) {
         throw new Error('Erreur serveur : réponse invalide (non-JSON)');
       }
 
-      const data = await response.json();
+      // Cas 3: Parser le JSON en sécurité
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        throw new Error('Erreur serveur : réponse JSON invalide');
+      }
 
-      // SECURITÉ MAXIMUM : Gérer les erreurs backend proprement
+      // Gérer les erreurs backend proprement
       if (!response.ok) {
         const errorMsg = 
           (data && typeof data === 'object' && (data.error || data.message)) 
@@ -56,7 +71,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         throw new Error(errorMsg);
       }
 
-      // 2. Définir le gain cible et afficher la roue
+      // Définir le gain cible et afficher la roue
       if (data.gain && typeof data.gain === 'object' && data.gain.name) {
         setTargetPrize(data.gain.name);
       } else if (data.prize) {
@@ -65,7 +80,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         throw new Error("Format de réponse invalide du backend");
       }
       
-      setShowWheel(true);
+      setShowWheel(true;
       
     } catch (err: unknown) {
       let errorMessage = 'Erreur de validation du code';
@@ -76,7 +91,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         errorMessage = err;
       }
       
-      // SECURITÉ MAXIMUM : Empêcher les erreurs JS fantômes
+      // Empêcher les erreurs JS fantômes
       if (!errorMessage || typeof errorMessage !== 'string') {
         errorMessage = 'Erreur inattendue lors de la validation';
       }
@@ -102,12 +117,27 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         body: JSON.stringify({ code: code.toUpperCase().trim() })
       });
 
-      if (!response.headers.get('content-type')?.includes('application/json')) {
+      // Ajout des vérifications critiques ici aussi
+      const contentType = response.headers.get('content-type');
+      const contentLength = response.headers.get('content-length');
+      
+      if (contentLength === '0' || (contentLength === null && response.status !== 204)) {
+        console.error('Réponse vide lors de la réclamation');
+        return;
+      }
+      
+      if (!contentType?.includes('application/json')) {
         console.error('Réponse invalide lors de la réclamation (non-JSON)');
         return;
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Réponse JSON invalide lors de la réclamation');
+        return;
+      }
 
       if (!response.ok) {
         const errorMsg = data?.error || data?.message || `Erreur ${response.status}`;
