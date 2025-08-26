@@ -39,18 +39,32 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         body: JSON.stringify({ code: code.toUpperCase().trim() })
       });
 
-      const data = await response.json();
+      // Correction critique ici 👇
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        // Gestion des réponses non-JSON (très rare mais possible)
+        throw new Error('Erreur serveur : réponse invalide');
+      }
 
+      // Correction critique ici 👇
       if (!response.ok) {
-        throw new Error(data.message || 'Erreur lors de la vérification du code');
+        throw new Error(data?.error || data?.message || 'Erreur lors de la vérification du code');
       }
 
       // 2. Définir le gain cible et afficher la roue
-      setTargetPrize(data.data.prize);
+      setTargetPrize(data.gain?.name || data.prize);
       setShowWheel(true);
       
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      // Correction critique ici 👇
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : 'Erreur de validation du code';
+      
+      setError(errorMessage);
+      console.error('Erreur complète:', err);
     } finally {
       setLoading(false);
     }
@@ -70,18 +84,22 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         body: JSON.stringify({ code: code.toUpperCase().trim() })
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Réponse invalide lors de la réclamation');
+        return;
+      }
 
       if (!response.ok) {
-        console.error('Erreur lors de la réclamation:', data.error);
-        // Ne pas bloquer l'UX, juste logger l'erreur
+        console.error('Erreur lors de la réclamation:', data?.error || 'Erreur inconnue');
       }
 
       console.log('Participation enregistrée:', data);
       
     } catch (err) {
       console.error('Erreur lors de la réclamation du gain:', err);
-      // Ne pas bloquer l'UX
     }
   };
 
