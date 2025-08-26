@@ -103,7 +103,8 @@ export default function DashboardPage() {
 
     } catch (error) {
       console.error('Error validating code:', error);
-      alert('Erreur lors de la validation du code');
+      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la validation du code';
+      alert(errorMessage);
     }
   };
 
