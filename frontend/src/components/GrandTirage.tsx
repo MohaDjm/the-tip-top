@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiCall } from '@/lib/api';
 
 interface Winner {
   id: string;
@@ -34,17 +35,11 @@ export default function GrandTirage() {
     
     try {
       setIsLoading(true);
-      const response = await fetch('/api/admin/grand-tirage/status', {
+      const data = await apiCall('/admin/grand-tirage/status', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors du chargement du statut');
-      }
-
-      const data = await response.json();
       setStatus(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -66,20 +61,12 @@ export default function GrandTirage() {
       setIsDrawing(true);
       setError(null);
 
-      const response = await fetch('/api/admin/grand-tirage', {
+      const result = await apiCall('/admin/grand-tirage', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
         },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors du tirage');
-      }
-
-      const result = await response.json();
       
       // Recharger le statut pour afficher le résultat
       await loadStatus();
