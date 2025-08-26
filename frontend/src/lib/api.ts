@@ -38,9 +38,20 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
+    // Vérifier que la réponse est bien du JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      const textResponse = await response.text();
+      throw new Error(`Réponse non-JSON: ${textResponse}`);
+    }
+    
     return await response.json();
   } catch (error) {
     console.error('API call failed:', error);
-    throw error;
+    // Ne pas essayer de faire .json() sur l'erreur
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Erreur API inconnue');
   }
 };
