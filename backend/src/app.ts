@@ -260,7 +260,7 @@ app.post('/api/auth/social', async (req: Request, res: Response) => {
 // ===========================
 
 // Vérifier un code sans le marquer comme utilisé (pour la roue)
-app.post('/api/participation/check-code', authMiddleware, async (req: AuthRequest, res: Response) => {
+const handleValidateCode = async (req: AuthRequest, res: Response) => {
   try {
     const { code } = req.body;
 
@@ -296,7 +296,11 @@ app.post('/api/participation/check-code', authMiddleware, async (req: AuthReques
     console.error('Erreur vérification code:', error);
     res.status(500).json({ error: 'Erreur lors de la vérification du code' });
   }
-});
+};
+
+// === DÉFINIR LES DEUX ROUTES QUI UTILISENT LA MÊME LOGIQUE ===
+app.post('/api/participation/check-code', authMiddleware, handleValidateCode);
+app.post('/api/participation/validate-code', authMiddleware, handleValidateCode);
 
 // Marquer un code comme utilisé après animation (claim)
 app.post('/api/participation/claim', authMiddleware, async (req: AuthRequest, res: Response) => {
