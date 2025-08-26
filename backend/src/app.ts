@@ -1082,8 +1082,8 @@ app.get('/api/health', async (req: Request, res: Response) => {
 });
 
 // Démarrage du serveur
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+const PORT = parseInt(process.env.PORT || '3002', 10);
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 API démarrée sur le port ${PORT}`);
   console.log(`📊 Environnement: ${process.env.NODE_ENV || 'development'}`);
 });
