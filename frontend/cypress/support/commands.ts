@@ -51,7 +51,7 @@ Cypress.Commands.add('checkA11y', (context?: any, options?: any) => {
 declare global {
   namespace Cypress {
     interface Chainable {
-      login(email: string, password: string): Chainable<Element>
+      login(email: string, password: string, role?: string): Chainable<Element>
       checkAccessibility(): Chainable<void>
       injectAxe(): Chainable<void>
     }
