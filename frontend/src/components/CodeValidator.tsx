@@ -32,6 +32,9 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         throw new Error('Vous devez être connecté pour valider un code');
       }
       
+      console.log('DEBUG: Appel API vers:', `${API_URL}/participation/check-code`);
+      console.log('DEBUG: Code envoyé:', code.trim());
+      
       const response = await fetch(`${API_URL}/participation/check-code`, {
         method: 'POST',
         headers: {
@@ -40,6 +43,10 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         },
         body: JSON.stringify({ code: code.trim() })
       });
+
+      console.log('DEBUG: Response reçue:', response);
+      console.log('DEBUG: Response status:', response.status);
+      console.log('DEBUG: Response headers:', Object.fromEntries(response.headers.entries()));
 
       // Vérification critique pour éviter l'erreur "e.json is not a function"
       if (!response) {
