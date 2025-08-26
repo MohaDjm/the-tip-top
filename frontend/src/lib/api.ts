@@ -34,10 +34,6 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   try {
     const response = await fetch(url, defaultOptions);
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
     // Vérifier que la réponse est bien du JSON
     const contentType = response.headers.get('content-type');
     if (!contentType?.includes('application/json')) {
@@ -45,7 +41,15 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
       throw new Error(`Réponse non-JSON: ${textResponse}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    
+    if (!response.ok) {
+      // Si le serveur retourne une erreur avec un message JSON, l'utiliser
+      const errorMessage = data.error || data.message || `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
+    }
+    
+    return data;
   } catch (error) {
     console.error('API call failed:', error);
     // Ne pas essayer de faire .json() sur l'erreur
