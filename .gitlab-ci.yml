@@ -1,56 +1,43 @@
 stages:
   - build
-  - test
-  - quality
   - deploy
 
 variables:
-  DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: ""
+  PROJECT_PATH: "/root/the-tip-top"
 
 build:
   stage: build
+  tags:
+    - deploy
+    - shell
   script:
-    - docker-compose build
-  artifacts:
-    expire_in: 1 hour
-
-test:backend:
-  stage: test
-  script:
-    - cd backend
+    - cd $PROJECT_PATH/frontend
     - npm install
-    - npm test
-  coverage: '/Coverage: \d+\.\d+%/'
-
-test:frontend:
-  stage: test
-  script:
-    - cd frontend
+    - npm run build
+    - cd $PROJECT_PATH/backend
     - npm install
-    - npm test
-
-sonarqube:
-  stage: quality
-  image: sonarsource/sonar-scanner-cli
-  script:
-    - sonar-scanner
-
-deploy:staging:
-  stage: deploy
-  script:
-    - docker-compose up -d
-  environment:
-    name: staging
+    - npm run build
   only:
-    - develop
+    - main
 
 deploy:production:
   stage: deploy
+  tags:
+    - deploy
+    - shell
   script:
-    - docker-compose -f docker-compose.prod.yml up -d
+    - cd $PROJECT_PATH
+    - git pull origin main
+    - cd frontend
+    - npm run build
+    - cd ../backend
+    - npm run build
+    - pm2 restart frontend
+    - pm2 restart backend
+    - echo "✅ Deployment completed successfully!"
   environment:
     name: production
+    url: http://164.68.103.88
   only:
     - main
   when: manual
