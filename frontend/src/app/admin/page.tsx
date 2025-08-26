@@ -72,7 +72,7 @@ export default function AdminPage() {
         window.location.href = '/';
         return;
       }
-      setUser(parsedUser);
+      // setUser(parsedUser); // Removed as user state is not used
       loadAdminData(token);
     } catch (error) {
       console.error('Error parsing user data:', error);
