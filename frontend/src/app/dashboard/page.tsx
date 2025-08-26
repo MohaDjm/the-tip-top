@@ -88,6 +88,7 @@ export default function DashboardPage() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ code: codeToValidate }),
       });
@@ -564,6 +565,7 @@ export default function DashboardPage() {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ code: validatedCode }),
               });
