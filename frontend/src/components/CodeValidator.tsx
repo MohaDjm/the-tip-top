@@ -80,7 +80,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         throw new Error("Format de réponse invalide du backend");
       }
       
-      setShowWheel(true;
+      setShowWheel(true);
       
     } catch (err: unknown) {
       let errorMessage = 'Erreur de validation du code';
