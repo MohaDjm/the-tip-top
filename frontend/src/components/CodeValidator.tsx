@@ -64,7 +64,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
       let data;
       try {
         data = await response.json();
-      } catch (parseError) {
+      } catch {
         throw new Error('Impossible de parser la réponse du serveur');
       }
 
@@ -107,7 +107,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
     }
   };
 
-  const handleWheelComplete = async (prize: string) => {
+  const handleWheelComplete = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -139,7 +139,7 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
       let data;
       try {
         data = await response.json();
-      } catch (parseError) {
+      } catch {
         console.error('Impossible de parser la réponse de réclamation');
         return;
       }
