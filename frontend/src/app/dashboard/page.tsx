@@ -84,21 +84,13 @@ export default function DashboardPage() {
 
     try {
       // 1. Vérifier le code d'abord (sans le marquer comme utilisé)
-      const checkResponse = await apiCall('/participation/check-code', {
+      const checkData = await apiCall('/participation/check-code', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ code: codeToValidate }),
       });
-
-      const checkData = await checkResponse.json();
-
-      if (!checkResponse.ok) {
-        alert(checkData.error || 'Code invalide');
-        return;
-      }
 
       // 2. Sauvegarder le code pour l'utiliser après l'animation
       setValidatedCode(codeToValidate);
@@ -568,32 +560,18 @@ export default function DashboardPage() {
               const token = localStorage.getItem('token');
               
               // 3. Marquer le code comme utilisé après l'animation
-              const claimResponse = await apiCall('/participation/claim', {
+              const claimData = await apiCall('/participation/claim', {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/json',
                   'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({ code: validatedCode }),
               });
 
-              const claimData = await claimResponse.json();
-
-              if (claimResponse.ok) {
-                console.log('Participation enregistrée:', claimData);
-                // Recharger les participations pour mettre à jour l'affichage
-                if (token) {
-                  loadParticipations(token);
-                }
-              } else {
-                console.error('Erreur lors de la réclamation:', claimData.error);
-                // Ne pas afficher d'erreur à l'utilisateur si la participation a été créée
-                if (claimData.success) {
-                  console.log('Participation créée malgré l\'erreur HTTP');
-                  if (token) {
-                    loadParticipations(token);
-                  }
-                }
+              console.log('Participation enregistrée:', claimData);
+              // Recharger les participations pour mettre à jour l'affichage
+              if (token) {
+                loadParticipations(token);
               }
             } catch (error) {
               console.error('Erreur lors de la réclamation du gain:', error);
