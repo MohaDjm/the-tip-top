@@ -28,58 +28,60 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
       setError('');
       
       const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Vous devez être connecté pour valider un code');
+      }
       
-      // 1. Vérifier le code et récupérer le gain (sans marquer comme utilisé)
       const response = await fetch(`${API_URL}/participation/check-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ code: code.toUpperCase().trim() })
+        body: JSON.stringify({ code: code.trim() })
       });
 
-      // CORRECTION CRITIQUE : Vérifier si la réponse a un corps
-      const contentType = response.headers.get('content-type');
-      const contentLength = response.headers.get('content-length');
-      
-      // Cas 1: Réponse vide (erreur backend critique)
-      if (contentLength === '0' || (contentLength === null && response.status !== 204)) {
-        throw new Error('Erreur serveur : réponse vide');
-      }
-      
-      // Cas 2: Réponse non-JSON
-      if (!contentType?.includes('application/json')) {
-        throw new Error('Erreur serveur : réponse invalide (non-JSON)');
+      // Vérification critique pour éviter l'erreur "e.json is not a function"
+      if (!response) {
+        throw new Error('Aucune réponse du serveur');
       }
 
-      // Cas 3: Parser le JSON en sécurité
+      // Vérifier le type de contenu
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const textResponse = await response.text();
+        throw new Error(`Réponse serveur invalide: ${textResponse || 'Format non-JSON'}`);
+      }
+
+      // Parser le JSON de manière sécurisée
       let data;
       try {
         data = await response.json();
       } catch (parseError) {
-        throw new Error('Erreur serveur : réponse JSON invalide');
+        throw new Error('Impossible de parser la réponse du serveur');
       }
 
-      // Gérer les erreurs backend proprement
       if (!response.ok) {
-        const errorMsg = 
-          (data && typeof data === 'object' && (data.error || data.message)) 
-            ? (data.error || data.message) 
-            : `Erreur ${response.status}`;
-            
+        const errorMsg = data?.error || data?.message || `Erreur ${response.status}`;
         throw new Error(errorMsg);
       }
 
-      // Définir le gain cible et afficher la roue
-      if (data.gain && typeof data.gain === 'object' && data.gain.name) {
-        setTargetPrize(data.gain.name);
+      // Vérifier la structure de la réponse
+      if (!data || typeof data !== 'object') {
+        throw new Error('Réponse serveur invalide');
+      }
+
+      // Extraire le nom du gain
+      let prizeName = '';
+      if (data.gain?.name) {
+        prizeName = data.gain.name;
       } else if (data.prize) {
-        setTargetPrize(data.prize);
+        prizeName = data.prize;
       } else {
-        throw new Error("Format de réponse invalide du backend");
+        throw new Error('Aucun gain trouvé dans la réponse');
       }
       
+      setTargetPrize(prizeName);
       setShowWheel(true);
       
     } catch (err: unknown) {
@@ -91,13 +93,8 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
         errorMessage = err;
       }
       
-      // Empêcher les erreurs JS fantômes
-      if (!errorMessage || typeof errorMessage !== 'string') {
-        errorMessage = 'Erreur inattendue lors de la validation';
-      }
-      
       setError(errorMessage);
-      console.error('Erreur complète:', err);
+      console.error('Erreur validation code:', err);
     } finally {
       setLoading(false);
     }
@@ -106,28 +103,29 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
   const handleWheelComplete = async (prize: string) => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('Token manquant pour la réclamation');
+        return;
+      }
       
-      // 3. Marquer le code comme utilisé après l'animation
       const response = await fetch(`${API_URL}/participation/claim`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ code: code.toUpperCase().trim() })
+        body: JSON.stringify({ code: code.trim() })
       });
 
-      // Ajout des vérifications critiques ici aussi
-      const contentType = response.headers.get('content-type');
-      const contentLength = response.headers.get('content-length');
-      
-      if (contentLength === '0' || (contentLength === null && response.status !== 204)) {
-        console.error('Réponse vide lors de la réclamation');
+      if (!response) {
+        console.error('Aucune réponse lors de la réclamation');
         return;
       }
-      
+
+      const contentType = response.headers.get('content-type');
       if (!contentType?.includes('application/json')) {
-        console.error('Réponse invalide lors de la réclamation (non-JSON)');
+        const textResponse = await response.text();
+        console.error('Réponse non-JSON lors de la réclamation:', textResponse);
         return;
       }
 
@@ -135,16 +133,17 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
       try {
         data = await response.json();
       } catch (parseError) {
-        console.error('Réponse JSON invalide lors de la réclamation');
+        console.error('Impossible de parser la réponse de réclamation');
         return;
       }
 
       if (!response.ok) {
         const errorMsg = data?.error || data?.message || `Erreur ${response.status}`;
         console.error('Erreur lors de la réclamation:', errorMsg);
+        return;
       }
 
-      console.log('Participation enregistrée:', data);
+      console.log('Participation enregistrée avec succès:', data);
       
     } catch (err) {
       console.error('Erreur lors de la réclamation du gain:', err);
@@ -185,14 +184,14 @@ export default function CodeValidator({ onClose }: CodeValidatorProps) {
             <input
               type="text"
               value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="Ex: ABCD123456"
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Ex: 3668559563"
               maxLength={10}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-lg font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-[#D4B254] focus:border-transparent"
               disabled={loading}
             />
             <p className="text-sm text-gray-500 mt-1 text-center">
-              Format: 10 caractères (lettres et chiffres)
+              Format: 10 chiffres
             </p>
           </div>
 
