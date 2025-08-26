@@ -35,8 +35,8 @@ deploy:production:
     - npm run build
     - cd ../backend
     - npm run build
-    - pm2 restart frontend
-    - pm2 restart backend
+    - sudo -u root pm2 restart frontend
+    - sudo -u root pm2 restart backend
     - echo "✅ Deployment completed successfully!"
   environment:
     name: production
