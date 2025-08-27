@@ -4,6 +4,7 @@ stages:
 
 variables:
   PROJECT_PATH: "/home/gitlab-runner/the-tip-top"
+  PRODUCTION_PATH: "/root/the-tip-top"
 
 build:
   stage: build
@@ -35,12 +36,12 @@ deploy:production:
     - npm run build
     - cd ../backend
     - npm run build
-    - cp -r $PROJECT_PATH/frontend/.next /var/www/the-tip-top/frontend/ || true
-    - cp -r $PROJECT_PATH/backend/dist /var/www/the-tip-top/backend/ || true
-    - cp -r $PROJECT_PATH/frontend/src /var/www/the-tip-top/frontend/ || true
-    - cp -r $PROJECT_PATH/backend/src /var/www/the-tip-top/backend/ || true
-    - /usr/bin/pm2 restart frontend
-    - /usr/bin/pm2 restart backend
+    - cp -r $PROJECT_PATH/frontend/.next $PRODUCTION_PATH/frontend/
+    - cp -r $PROJECT_PATH/backend/dist $PRODUCTION_PATH/backend/
+    - cp -r $PROJECT_PATH/frontend/src $PRODUCTION_PATH/frontend/
+    - cp -r $PROJECT_PATH/backend/src $PRODUCTION_PATH/backend/
+    - pm2 restart backend
+    - pm2 restart frontend
     - echo "✅ Deployment completed successfully!"
   environment:
     name: production
