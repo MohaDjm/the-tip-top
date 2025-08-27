@@ -819,8 +819,7 @@ app.get('/api/gains', async (req: Request, res: Response) => {
         description: true,
         value: true,
         quantity: true,
-        remainingQuantity: true,
-        probability: true
+        remainingQuantity: true
       }
     });
 
