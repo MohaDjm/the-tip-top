@@ -14,6 +14,10 @@ import Redis from 'ioredis';
 dotenv.config();
 
 const app = express();
+
+// Trust proxy pour Nginx reverse proxy
+app.set('trust proxy', true);
+
 const prisma = new PrismaClient();
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
