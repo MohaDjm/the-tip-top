@@ -43,4 +43,4 @@ deploy:production:
     url: http://164.68.103.88
   only:
     - main
-  when: manual
+  # when: manual  # Déploiement automatique activé
