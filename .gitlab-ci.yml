@@ -3,7 +3,7 @@ stages:
   - deploy
 
 variables:
-  PROJECT_PATH: "/home/gitlab-runner/the-tip-top"
+  PROJECT_PATH: "/var/www/the-tip-top"
 
 build:
   stage: build
@@ -35,14 +35,6 @@ deploy:production:
     - npm run build
     - cd ../backend
     - npm run build
-    - mkdir -p /var/www/the-tip-top/frontend/.next
-    - mkdir -p /var/www/the-tip-top/backend/dist
-    - mkdir -p /var/www/the-tip-top/frontend/src
-    - mkdir -p /var/www/the-tip-top/backend/src
-    - rsync -av --delete $PROJECT_PATH/frontend/.next/ /var/www/the-tip-top/frontend/.next/
-    - rsync -av --delete $PROJECT_PATH/backend/dist/ /var/www/the-tip-top/backend/dist/
-    - rsync -av --delete $PROJECT_PATH/frontend/src/ /var/www/the-tip-top/frontend/src/
-    - rsync -av --delete $PROJECT_PATH/backend/src/ /var/www/the-tip-top/backend/src/
     - /usr/bin/pm2 restart frontend
     - /usr/bin/pm2 restart backend
     - echo "✅ Deployment completed successfully!"
