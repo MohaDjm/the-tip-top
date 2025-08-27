@@ -36,12 +36,16 @@ deploy:production:
     - npm run build
     - cd ../backend
     - npm run build
-    # Deploy using rsync to handle permissions better
-    - rsync -av --delete $PROJECT_PATH/frontend/.next/ $PRODUCTION_PATH/frontend/.next/
-    - rsync -av --delete $PROJECT_PATH/backend/dist/ $PRODUCTION_PATH/backend/dist/
-    - rsync -av $PROJECT_PATH/frontend/src/ $PRODUCTION_PATH/frontend/src/
-    - rsync -av $PROJECT_PATH/backend/src/ $PRODUCTION_PATH/backend/src/
-    # Restart services (assuming gitlab-runner has permission)
+    # Copy built files to production directory
+    - mkdir -p $PRODUCTION_PATH/frontend/.next
+    - mkdir -p $PRODUCTION_PATH/backend/dist
+    - cp -r $PROJECT_PATH/frontend/.next/* $PRODUCTION_PATH/frontend/.next/
+    - cp -r $PROJECT_PATH/backend/dist/* $PRODUCTION_PATH/backend/dist/
+    - cp -r $PROJECT_PATH/frontend/src $PRODUCTION_PATH/frontend/
+    - cp -r $PROJECT_PATH/backend/src $PRODUCTION_PATH/backend/
+    - cp $PROJECT_PATH/backend/package.json $PRODUCTION_PATH/backend/
+    - cp $PROJECT_PATH/frontend/package.json $PRODUCTION_PATH/frontend/
+    # Restart services
     - pm2 restart backend || echo "Backend restart failed, continuing..."
     - pm2 restart frontend || echo "Frontend restart failed, continuing..."
     - echo "✅ Deployment completed successfully!"
