@@ -3,7 +3,7 @@ stages:
   - deploy
 
 variables:
-  PROJECT_PATH: "/home/gitlab-runner/the-tip-top"
+  PROJECT_PATH: "/var/www/the-tip-top"
 
 build:
   stage: build
