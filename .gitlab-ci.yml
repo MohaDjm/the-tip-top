@@ -36,10 +36,17 @@ deploy:production:
     - npm run build
     - cd ../backend
     - npm run build
-    - cp -r $PROJECT_PATH/frontend/.next $PRODUCTION_PATH/frontend/
-    - cp -r $PROJECT_PATH/backend/dist $PRODUCTION_PATH/backend/
-    - cp -r $PROJECT_PATH/frontend/src $PRODUCTION_PATH/frontend/
-    - cp -r $PROJECT_PATH/backend/src $PRODUCTION_PATH/backend/
+    # Fix permissions and clean old files
+    - sudo rm -rf $PRODUCTION_PATH/frontend/.next
+    - sudo rm -rf $PRODUCTION_PATH/backend/dist
+    # Copy with sudo to handle permissions
+    - sudo cp -r $PROJECT_PATH/frontend/.next $PRODUCTION_PATH/frontend/
+    - sudo cp -r $PROJECT_PATH/backend/dist $PRODUCTION_PATH/backend/
+    - sudo cp -r $PROJECT_PATH/frontend/src $PRODUCTION_PATH/frontend/
+    - sudo cp -r $PROJECT_PATH/backend/src $PRODUCTION_PATH/backend/
+    # Fix ownership after copy
+    - sudo chown -R root:root $PRODUCTION_PATH/frontend/.next
+    - sudo chown -R root:root $PRODUCTION_PATH/backend/dist
     - sudo pm2 restart backend
     - sudo pm2 restart frontend
     - echo "✅ Deployment completed successfully!"
