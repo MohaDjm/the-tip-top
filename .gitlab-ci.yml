@@ -4,7 +4,7 @@ stages:
 
 variables:
   PROJECT_PATH: "/home/gitlab-runner/the-tip-top"
-  PRODUCTION_PATH: "/root/the-tip-top"
+  PRODUCTION_PATH: "/var/www/the-tip-top"
 
 build:
   stage: build
