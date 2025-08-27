@@ -809,7 +809,35 @@ app.get('/api/admin/recent-participations', authMiddleware, roleMiddleware(['ADM
   }
 });
 
-// Gains pour admin
+// Public gains endpoint (basic info)
+app.get('/api/gains', async (req: Request, res: Response) => {
+  try {
+    const gains = await prisma.gain.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        value: true,
+        quantity: true,
+        remainingQuantity: true,
+        probability: true
+      }
+    });
+
+    res.json({
+      success: true,
+      data: gains
+    });
+  } catch (error) {
+    console.error('Erreur gains publics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des gains'
+    });
+  }
+});
+
+// Gains pour admin (detailed info)
 app.get('/api/admin/gains', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
   try {
     const gains = await prisma.gain.findMany({
