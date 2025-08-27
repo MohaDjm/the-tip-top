@@ -40,8 +40,8 @@ deploy:production:
     - cp -r $PROJECT_PATH/backend/dist $PRODUCTION_PATH/backend/
     - cp -r $PROJECT_PATH/frontend/src $PRODUCTION_PATH/frontend/
     - cp -r $PROJECT_PATH/backend/src $PRODUCTION_PATH/backend/
-    - pm2 restart backend
-    - pm2 restart frontend
+    - sudo pm2 restart backend
+    - sudo pm2 restart frontend
     - echo "✅ Deployment completed successfully!"
   environment:
     name: production
