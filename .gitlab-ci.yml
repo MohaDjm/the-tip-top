@@ -35,6 +35,10 @@ deploy:production:
     - npm run build
     - cd ../backend
     - npm run build
+    - mkdir -p /var/www/the-tip-top/frontend/.next
+    - mkdir -p /var/www/the-tip-top/backend/dist
+    - mkdir -p /var/www/the-tip-top/frontend/src
+    - mkdir -p /var/www/the-tip-top/backend/src
     - rsync -av --delete $PROJECT_PATH/frontend/.next/ /var/www/the-tip-top/frontend/.next/
     - rsync -av --delete $PROJECT_PATH/backend/dist/ /var/www/the-tip-top/backend/dist/
     - rsync -av --delete $PROJECT_PATH/frontend/src/ /var/www/the-tip-top/frontend/src/
