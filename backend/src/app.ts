@@ -654,6 +654,50 @@ app.post('/api/employee/mark-claimed', authMiddleware, roleMiddleware(['EMPLOYEE
 // ROUTES ADMINISTRATION
 // ===========================
 
+// Dashboard stats (new endpoint for frontend)
+app.get('/api/admin/dashboard/stats', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const [
+      totalUsers,
+      totalParticipations,
+      totalCodes,
+      usedCodes,
+      claimedPrizes,
+      totalGains
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.participation.count(),
+      prisma.code.count(),
+      prisma.code.count({ where: { isUsed: true } }),
+      prisma.participation.count({ where: { isClaimed: true } }),
+      prisma.gain.count()
+    ]);
+
+    const stats = {
+      totalUsers,
+      totalParticipations,
+      totalCodes,
+      usedCodes,
+      availableCodes: totalCodes - usedCodes,
+      claimedPrizes,
+      unclaimedPrizes: totalParticipations - claimedPrizes,
+      totalGains
+    };
+
+    res.json({
+      success: true,
+      message: 'Dashboard stats retrieved successfully',
+      data: stats
+    });
+  } catch (error: any) {
+    console.error('Get dashboard stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve dashboard stats'
+    });
+  }
+});
+
 // Statistiques générales
 app.get('/api/admin/stats', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
   try {
