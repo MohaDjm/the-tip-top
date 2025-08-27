@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function CookieConsent() {
   const [showBanner, setShowBanner] = useState(false);
@@ -60,7 +61,13 @@ export default function CookieConsent() {
             </h3>
             <p className="text-sm text-gray-600 mb-4">
               Nous utilisons des cookies pour améliorer votre expérience sur notre site. 
-              Vous pouvez accepter tous les cookies ou personnaliser vos préférences.
+              Vous pouvez accepter tous les cookies ou personnaliser vos préférences.{' '}
+              <Link 
+                href="/legal" 
+                className="text-[#D4B254] hover:text-[#C4A244] underline font-medium"
+              >
+                En savoir plus
+              </Link>
             </p>
             
             <div className="space-y-2">
