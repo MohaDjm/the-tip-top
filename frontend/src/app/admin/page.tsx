@@ -39,21 +39,17 @@ interface Gain {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
-  const [dashboardStats, setDashboardStats] = useState<AdminStats | null>(null);
-  const [recentParticipations, setRecentParticipations] = useState<RecentParticipation[]>([]);
-  const [gains, setGains] = useState<Gain[]>([]);
-  const [user] = useState<Record<string, unknown> | null>(null);
-  const [employeeStats, setEmployeeStats] = useState<Record<string, unknown> | null>(null);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
+  const [recentParticipations, setRecentParticipations] = useState<any[]>([]);
+  const [gains, setGains] = useState<any[]>([]);
+  const [employeeStats, setEmployeeStats] = useState<any>(null);
   const [unclaimedPrizes, setUnclaimedPrizes] = useState<Record<string, unknown>[]>([]);
   const [claimedPrizes, setClaimedPrizes] = useState<Record<string, unknown>[]>([]);
   const [participations, setParticipations] = useState<Record<string, unknown>[]>([]);
   const [users, setUsers] = useState<Record<string, unknown>[]>([]);
   const [participationFilters, setParticipationFilters] = useState({ status: '', gainId: '' });
-  const [userFilters, setUserFilters] = useState({ role: '' });
-  const [codes] = useState<Record<string, unknown>[]>([]);
-  const [codeStats, setCodeStats] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     // Check admin authentication
@@ -72,7 +68,6 @@ export default function AdminPage() {
         window.location.href = '/';
         return;
       }
-      // setUser(parsedUser); // Removed as user state is not used
       loadAdminData(token);
     } catch (error) {
       console.error('Error parsing user data:', error);
@@ -97,25 +92,25 @@ export default function AdminPage() {
       }
 
       // Load recent participations
-      const recentParticipationsResponse = await apiCall('/admin/recent-participations', {
+      const recentParticipationsResponse = await apiCall('/admin/participations?limit=10', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       if (recentParticipationsResponse.ok) {
-        const participations = await recentParticipationsResponse.json();
-        setRecentParticipations(participations);
+        const result = await recentParticipationsResponse.json();
+        if (result.success && result.data) {
+          setRecentParticipations(result.data.participations || []);
+        }
       }
 
       // Load gains
-      const gainsResponse = await apiCall('/admin/gains', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const gainsResponse = await apiCall('/gains');
       if (gainsResponse.ok) {
-        const gainsData = await gainsResponse.json();
-        setGains(gainsData);
+        const result = await gainsResponse.json();
+        if (result.success && result.data) {
+          setGains(result.data);
+        }
       }
 
       // Load employee data for admin access
@@ -189,7 +184,6 @@ export default function AdminPage() {
       });
     }
   }, [dashboardStats]);
-
 
   const getStatusBadge = (isClaimed: boolean) => {
     if (isClaimed) {
@@ -285,139 +279,124 @@ export default function AdminPage() {
 
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard
-                title="Utilisateurs inscrits"
-                value={dashboardStats?.totalUsers || 0}
-                subtitle="+12% ce mois"
-                color="bg-gradient-to-br from-blue-50 to-blue-100"
-              />
-              <StatCard
-                title="Participations totales"
-                value={dashboardStats?.totalParticipations || 0}
-                subtitle={`Taux: ${dashboardStats ? ((dashboardStats.totalParticipations / dashboardStats.totalUsers) * 100).toFixed(1) : 0}%`}
-                color="bg-gradient-to-br from-green-50 to-green-100"
-              />
-              <StatCard
-                title="Codes utilisés"
-                value={`${dashboardStats?.usedCodes || 0}/${dashboardStats?.totalCodes || 0}`}
-                subtitle={`${dashboardStats ? ((dashboardStats.usedCodes / dashboardStats.totalCodes) * 100).toFixed(1) : 0}% utilisés`}
-                color="bg-gradient-to-br from-purple-50 to-purple-100"
-              />
-              <StatCard
-                title="Valeur totale distribuée"
-                value={`${dashboardStats ? (dashboardStats.totalValue / 1000).toFixed(0) : 0}k€`}
-                subtitle="Prix réclamés"
-                color="bg-gradient-to-br from-yellow-50 to-yellow-100"
-              />
-            </div>
-
-            {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Participation Chart */}
-              <div className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-                <h3 className="font-['Playfair_Display'] text-xl font-bold text-[#2C5545] mb-4">
-                  Participations par jour
-                </h3>
-                <div className="h-64 flex items-end justify-between space-x-2">
-                  {[120, 150, 180, 200, 175, 220, 190].map((height, index) => (
-                    <div key={index} className="flex-1 flex flex-col items-center">
-                      <div
-                        className="w-full bg-[#D4B254] rounded-t-md transition-all duration-500 hover:bg-[#2C5545]"
-                        style={{ height: `${(height / 220) * 100}%` }}
-                      ></div>
-                      <span className="text-xs text-gray-500 mt-2 font-['Lato']">
-                        {new Date(Date.now() - (6 - index) * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR', { weekday: 'short' })}
-                      </span>
-                    </div>
-                  ))}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Utilisateurs</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {dashboardStats ? dashboardStats.totalUsers : 'Chargement...'}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-blue-100 rounded-full">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                  </div>
                 </div>
               </div>
 
-              {/* Prize Distribution */}
-              <div className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-                <h3 className="font-['Playfair_Display'] text-xl font-bold text-[#2C5545] mb-4">
-                  Répartition des gains
-                </h3>
-                <div className="space-y-4">
-                  {gains.map((gain, index) => {
-                    const percentage = dashboardStats?.totalCodes ? ((gain.totalCodes / dashboardStats.totalCodes) * 100) : 0;
-                    return (
-                      <div key={gain.id} className="flex items-center space-x-4">
-                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: `hsl(${index * 60}, 70%, 50%)` }}></div>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-['Lato'] font-medium text-sm">{gain.name}</span>
-                            <span className="text-sm text-gray-500">{percentage.toFixed(1)}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="h-2 rounded-full transition-all duration-500"
-                              style={{
-                                width: `${percentage}%`,
-                                backgroundColor: `hsl(${index * 60}, 70%, 50%)`
-                              }}
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Participations</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {dashboardStats ? dashboardStats.totalParticipations : 'Chargement...'}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Codes Utilisés</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {dashboardStats ? dashboardStats.usedCodes : 'Chargement...'}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-yellow-100 rounded-full">
+                    <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.023.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Prix Réclamés</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {dashboardStats ? dashboardStats.claimedPrizes : 'Chargement...'}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-purple-100 rounded-full">
+                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Recent Participations */}
-            <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="font-['Playfair_Display'] text-xl font-bold text-[#2C5545]">
-                  Participations récentes
-                </h3>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Participations Récentes</h3>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-['Lato'] font-medium text-gray-500 uppercase tracking-wider">
-                        Utilisateur
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-['Lato'] font-medium text-gray-500 uppercase tracking-wider">
-                        Gain
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-['Lato'] font-medium text-gray-500 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-['Lato'] font-medium text-gray-500 uppercase tracking-wider">
-                        Statut
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {recentParticipations.map((participation) => (
-                      <tr key={participation.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="font-['Lato'] font-medium text-[#2C5545]">
-                              {participation.user.firstName} {participation.user.lastName}
-                            </div>
-                            <div className="text-sm text-gray-500">{participation.user.email}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap font-['Lato'] text-sm text-gray-900">
-                          {participation.gain.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap font-['Lato'] text-sm text-gray-500">
-                          {new Date(participation.participationDate).toLocaleDateString('fr-FR')}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {getStatusBadge(participation.isClaimed)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="p-6">
+                {recentParticipations && recentParticipations.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateur</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gain</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {recentParticipations.map((participation: any) => (
+                          <tr key={participation.id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {(participation.user as any)?.firstName} {(participation.user as any)?.lastName}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {(participation.gain as any)?.name}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {(participation.code as any)?.value}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {new Date(participation.participationDate as string).toLocaleDateString('fr-FR')}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                (participation.isClaimed as boolean)
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {(participation.isClaimed as boolean) ? 'Réclamé' : 'En attente'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-8">Aucune participation récente</p>
+                )}
               </div>
             </div>
           </div>
@@ -779,7 +758,7 @@ export default function AdminPage() {
         )}
 
         {/* Codes Tab */}
-        {activeTab === 'overview' && (
+        {activeTab === 'codes' && (
           <div className="space-y-6">
             {/* Grand Tirage au Sort */}
             <GrandTirage />
