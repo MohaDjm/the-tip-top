@@ -35,10 +35,12 @@ deploy:production:
     - npm run build
     - cd ../backend
     - npm run build
-    - sudo cp -r $PROJECT_PATH/frontend/.next /var/www/the-tip-top/frontend/
-    - sudo cp -r $PROJECT_PATH/backend/dist /var/www/the-tip-top/backend/
-    - sudo -u root /usr/bin/pm2 restart frontend
-    - sudo -u root /usr/bin/pm2 restart backend
+    - rsync -av --delete $PROJECT_PATH/frontend/.next/ /var/www/the-tip-top/frontend/.next/
+    - rsync -av --delete $PROJECT_PATH/backend/dist/ /var/www/the-tip-top/backend/dist/
+    - rsync -av --delete $PROJECT_PATH/frontend/src/ /var/www/the-tip-top/frontend/src/
+    - rsync -av --delete $PROJECT_PATH/backend/src/ /var/www/the-tip-top/backend/src/
+    - /usr/bin/pm2 restart frontend
+    - /usr/bin/pm2 restart backend
     - echo "✅ Deployment completed successfully!"
   environment:
     name: production
