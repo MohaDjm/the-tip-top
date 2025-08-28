@@ -1083,8 +1083,8 @@ app.post('/api/analytics/track', async (req: Request, res: Response) => {
         eventData: JSON.stringify(eventData),
         userId: userId || null,
         sessionId: sessionId || null,
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent') || null
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown'
       }
     });
 
