@@ -26,6 +26,7 @@ build:
     
     # Backend build
     - cd ../backend
+    - cp .env.production .env
     - npm install
     - npx prisma db push --accept-data-loss
     - npx prisma generate
@@ -47,6 +48,7 @@ deploy:production:
     - mv .next .next_backup 2>/dev/null || true
     - npm run build
     - cd ../backend
+    - cp .env.production .env
     - npx prisma db push --accept-data-loss
     - npx prisma generate
     - npm run build
