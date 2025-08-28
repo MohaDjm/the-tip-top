@@ -80,103 +80,81 @@ export default function AdminPage() {
   const loadAdminData = async (token: string) => {
     try {
       // Load dashboard stats
-      const response = await apiCall('/admin/dashboard/stats', {
+      const result = await apiCall('/admin/dashboard/stats', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Dashboard stats response:', result);
-        if (result.success && result.data) {
-          setDashboardStats(result.data);
-          console.log('Dashboard stats loaded:', result.data);
-        } else {
-          console.error('Dashboard stats response invalid:', result);
-        }
+      console.log('Dashboard stats response:', result);
+      if (result.success && result.data) {
+        setDashboardStats(result.data);
+        console.log('Dashboard stats loaded:', result.data);
       } else {
-        console.error('Dashboard stats request failed:', response.status, response.statusText);
+        console.error('Dashboard stats response invalid:', result);
       }
 
       // Load recent participations
-      const recentParticipationsResponse = await apiCall('/admin/participations?limit=10', {
+      const recentResult = await apiCall('/admin/participations?limit=10', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      if (recentParticipationsResponse.ok) {
-        const result = await recentParticipationsResponse.json();
-        console.log('Recent participations response:', result);
-        if (result.success && result.data) {
-          setRecentParticipations(result.data.participations || []);
-        } else {
-          console.error('Recent participations response invalid:', result);
-        }
+      console.log('Recent participations response:', recentResult);
+      if (recentResult.success && recentResult.data) {
+        setRecentParticipations(recentResult.data.participations || []);
       } else {
-        console.error('Recent participations request failed:', recentParticipationsResponse.status);
+        console.error('Recent participations response invalid:', recentResult);
       }
 
       // Load gains
-      const gainsResponse = await apiCall('/gains');
-      if (gainsResponse.ok) {
-        const result = await gainsResponse.json();
-        if (result.success && result.data) {
-          setGains(result.data);
-        }
+      const gainsResult = await apiCall('/gains');
+      console.log('Gains response:', gainsResult);
+      if (gainsResult.success && gainsResult.data) {
+        setGains(gainsResult.data);
       }
 
       // Load employee data for admin access
-      const employeeStatsResponse = await apiCall('/employee/stats', {
+      const empStats = await apiCall('/employee/stats', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      if (employeeStatsResponse.ok) {
-        const empStats = await employeeStatsResponse.json();
-        setEmployeeStats(empStats);
-      }
+      console.log('Employee stats response:', empStats);
+      setEmployeeStats(empStats);
 
-      const unclaimedResponse = await apiCall('/employee/unclaimed-prizes', {
+      const unclaimed = await apiCall('/employee/unclaimed-prizes', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      if (unclaimedResponse.ok) {
-        const unclaimed = await unclaimedResponse.json();
-        setUnclaimedPrizes(unclaimed);
-      }
+      console.log('Unclaimed prizes response:', unclaimed);
+      setUnclaimedPrizes(unclaimed);
 
-      const claimedResponse = await apiCall('/employee/claimed-prizes', {
+      const claimed = await apiCall('/employee/claimed-prizes', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      if (claimedResponse.ok) {
-        const claimed = await claimedResponse.json();
-        setClaimedPrizes(claimed);
-      }
+      console.log('Claimed prizes response:', claimed);
+      setClaimedPrizes(claimed);
 
       // Load participations
-      const participationsResponse = await apiCall('/admin/participations', {
+      const participationsData = await apiCall('/admin/participations', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      if (participationsResponse.ok) {
-        const participationsData = await participationsResponse.json();
-        setParticipations(participationsData || []);
-      }
+      console.log('Participations response:', participationsData);
+      setParticipations(participationsData || []);
 
       // Load users
-      const usersResponse = await apiCall('/admin/users', {
+      const usersData = await apiCall('/admin/users', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      if (usersResponse.ok) {
-        const usersData = await usersResponse.json();
-        setUsers(usersData || []);
-      }
+      console.log('Users response:', usersData);
+      setUsers(usersData || []);
 
     } catch (error) {
       console.error('Error loading admin data:', error);
