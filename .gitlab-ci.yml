@@ -20,7 +20,8 @@ build:
     
     # Frontend build
     - cd frontend
-    - sudo chown -R gitlab-runner:gitlab-runner .next || true
+    - find .next -type f -exec chmod 666 {} \; 2>/dev/null || true
+    - find .next -type d -exec chmod 777 {} \; 2>/dev/null || true
     - rm -rf .next || true
     - npm install
     - npm run build
@@ -45,7 +46,8 @@ deploy:production:
     - git clean -fd
     - git pull origin main
     - cd frontend
-    - sudo chown -R gitlab-runner:gitlab-runner .next || true
+    - find .next -type f -exec chmod 666 {} \; 2>/dev/null || true
+    - find .next -type d -exec chmod 777 {} \; 2>/dev/null || true
     - rm -rf .next || true
     - npm run build
     - cd ../backend
