@@ -15,6 +15,9 @@ build:
     - git clone https://gitlab.com/MohaDjm/the-tip-top.git $PROJECT_PATH || true
     - cd $PROJECT_PATH
     - git reset --hard HEAD
+    # Force remove problematic directories with sudo
+    - sudo rm -rf frontend/.next_backup || true
+    - sudo rm -rf frontend/.next || true
     - git clean -fd || true
     - git pull origin main
     
@@ -22,16 +25,18 @@ build:
     - cd frontend
     - npm install
     # Build in temporary directory to avoid permission issues
-    - mkdir -p ../temp-build/frontend
-    - cp -r . ../temp-build/frontend/
-    - cd ../temp-build/frontend
+    - mkdir -p /tmp/gitlab-build-frontend
+    - cp -r . /tmp/gitlab-build-frontend/
+    - cd /tmp/gitlab-build-frontend
     - npm run build
     # Copy build output back
-    - mkdir -p ../../the-tip-top/frontend/.next
-    - cp -r .next/* ../../the-tip-top/frontend/.next/ || true
+    - mkdir -p $PROJECT_PATH/frontend/.next
+    - cp -r .next/* $PROJECT_PATH/frontend/.next/ || true
+    # Cleanup temp directory
+    - rm -rf /tmp/gitlab-build-frontend
     
     # Backend build
-    - cd ../../the-tip-top/backend
+    - cd $PROJECT_PATH/backend
     - cp .env.production .env
     - npm install
     - npx prisma db push --accept-data-loss
@@ -48,23 +53,34 @@ deploy:production:
   script:
     - cd $PROJECT_PATH
     - git reset --hard HEAD
+    # Force remove problematic directories with sudo
+    - sudo rm -rf frontend/.next_backup || true
+    - sudo rm -rf frontend/.next || true
     - git clean -fd || true
     - git pull origin main
+    
+    # Frontend build
     - cd frontend
     - npm install
     # Build in temporary directory to avoid permission issues
-    - mkdir -p ../temp-build/frontend
-    - cp -r . ../temp-build/frontend/
-    - cd ../temp-build/frontend
+    - mkdir -p /tmp/gitlab-deploy-frontend
+    - cp -r . /tmp/gitlab-deploy-frontend/
+    - cd /tmp/gitlab-deploy-frontend
     - npm run build
     # Copy build output back
-    - mkdir -p ../../the-tip-top/frontend/.next
-    - cp -r .next/* ../../the-tip-top/frontend/.next/ || true
-    - cd ../../the-tip-top/backend
+    - mkdir -p $PROJECT_PATH/frontend/.next
+    - cp -r .next/* $PROJECT_PATH/frontend/.next/ || true
+    # Cleanup temp directory
+    - rm -rf /tmp/gitlab-deploy-frontend
+    
+    # Backend build
+    - cd $PROJECT_PATH/backend
     - cp .env.production .env
+    - npm install
     - npx prisma db push --accept-data-loss
     - npx prisma generate
     - npm run build
+    
     # Copy built files to production directory
     - mkdir -p $PRODUCTION_PATH/frontend/.next
     - mkdir -p $PRODUCTION_PATH/backend/dist
@@ -74,6 +90,7 @@ deploy:production:
     - cp -r $PROJECT_PATH/backend/src $PRODUCTION_PATH/backend/ || true
     - cp $PROJECT_PATH/backend/package.json $PRODUCTION_PATH/backend/ || true
     - cp $PROJECT_PATH/frontend/package.json $PRODUCTION_PATH/frontend/ || true
+    
     # Restart services
     - pm2 restart backend || echo "Backend restart failed, continuing..."
     - pm2 restart frontend || echo "Frontend restart failed, continuing..."
