@@ -779,7 +779,7 @@ app.get('/api/admin/stats', authMiddleware, roleMiddleware(['ADMIN']), async (re
     });
   } catch (error) {
     console.error('Erreur statistiques:', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
+    res.status(500).json({ success: false, message: 'Erreur lors de la récupération des statistiques' });
   }
 });
 
