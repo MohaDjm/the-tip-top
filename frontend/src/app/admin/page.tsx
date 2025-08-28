@@ -50,6 +50,8 @@ export default function AdminPage() {
   const [participations, setParticipations] = useState<Record<string, unknown>[]>([]);
   const [users, setUsers] = useState<Record<string, unknown>[]>([]);
   const [participationFilters, setParticipationFilters] = useState({ status: '', gainId: '' });
+  const [userFilters, setUserFilters] = useState({ role: '', status: '' });
+  const [codeStats, setCodeStats] = useState({ total: 0, used: 0, available: 0, usageRate: '0' });
 
   useEffect(() => {
     // Check admin authentication
@@ -85,10 +87,15 @@ export default function AdminPage() {
       });
       if (response.ok) {
         const result = await response.json();
+        console.log('Dashboard stats response:', result);
         if (result.success && result.data) {
           setDashboardStats(result.data);
           console.log('Dashboard stats loaded:', result.data);
+        } else {
+          console.error('Dashboard stats response invalid:', result);
         }
+      } else {
+        console.error('Dashboard stats request failed:', response.status, response.statusText);
       }
 
       // Load recent participations
@@ -99,9 +106,14 @@ export default function AdminPage() {
       });
       if (recentParticipationsResponse.ok) {
         const result = await recentParticipationsResponse.json();
+        console.log('Recent participations response:', result);
         if (result.success && result.data) {
           setRecentParticipations(result.data.participations || []);
+        } else {
+          console.error('Recent participations response invalid:', result);
         }
+      } else {
+        console.error('Recent participations request failed:', recentParticipationsResponse.status);
       }
 
       // Load gains
