@@ -15,7 +15,7 @@ build:
     - git clone https://gitlab.com/MohaDjm/the-tip-top.git $PROJECT_PATH || true
     - cd $PROJECT_PATH
     - git reset --hard HEAD
-    - git clean -fd
+    - git clean -fd || true
     - git pull origin main
     
     # Frontend build
@@ -42,7 +42,7 @@ deploy:production:
   script:
     - cd $PROJECT_PATH
     - git reset --hard HEAD
-    - git clean -fd
+    - git clean -fd || true
     - git pull origin main
     - cd frontend
     - mv .next .next_backup 2>/dev/null || true
