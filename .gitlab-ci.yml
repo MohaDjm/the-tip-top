@@ -20,9 +20,7 @@ build:
     
     # Frontend build
     - cd frontend
-    - find .next -type f -exec chmod 666 {} \; 2>/dev/null || true
-    - find .next -type d -exec chmod 777 {} \; 2>/dev/null || true
-    - rm -rf .next || true
+    - mv .next .next_backup 2>/dev/null || true
     - npm install
     - npm run build
     
@@ -46,9 +44,7 @@ deploy:production:
     - git clean -fd
     - git pull origin main
     - cd frontend
-    - find .next -type f -exec chmod 666 {} \; 2>/dev/null || true
-    - find .next -type d -exec chmod 777 {} \; 2>/dev/null || true
-    - rm -rf .next || true
+    - mv .next .next_backup 2>/dev/null || true
     - npm run build
     - cd ../backend
     - npx prisma db push --accept-data-loss
