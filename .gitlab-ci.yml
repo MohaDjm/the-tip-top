@@ -26,6 +26,7 @@ build:
     # Backend build
     - cd ../backend
     - npm install
+    - npx prisma db push --accept-data-loss
     - npx prisma generate
     - npm run build
   only:
@@ -44,6 +45,8 @@ deploy:production:
     - cd frontend
     - npm run build
     - cd ../backend
+    - npx prisma db push --accept-data-loss
+    - npx prisma generate
     - npm run build
     # Copy built files to production directory
     - mkdir -p $PRODUCTION_PATH/frontend/.next
