@@ -24,6 +24,11 @@ class Analytics {
   }
 
   private getOrCreateSessionId(): string {
+    // Check if we're in browser environment
+    if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
+      return 'session_ssr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
     let sessionId = sessionStorage.getItem('analytics_session_id');
     if (!sessionId) {
       sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -33,6 +38,11 @@ class Analytics {
   }
 
   private getUserId(): string | undefined {
+    // Check if we're in browser environment
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return undefined;
+    }
+    
     try {
       const token = localStorage.getItem('token');
       if (token) {
@@ -46,6 +56,11 @@ class Analytics {
   }
 
   async track(event: TrackingEvent): Promise<void> {
+    // Skip tracking during SSR
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     try {
       const trackingData = {
         ...event,
