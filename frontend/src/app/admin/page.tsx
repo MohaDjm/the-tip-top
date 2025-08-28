@@ -94,14 +94,14 @@ export default function AdminPage() {
       }
 
       // Load recent participations
-      const recentResult = await apiCall('/admin/participations?limit=10', {
+      const recentResult = await apiCall('/admin/recent-participations', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       console.log('Recent participations response:', recentResult);
       if (recentResult.success && recentResult.data) {
-        setRecentParticipations(recentResult.data.participations || []);
+        setRecentParticipations(recentResult.data);
       } else {
         console.error('Recent participations response invalid:', recentResult);
       }
