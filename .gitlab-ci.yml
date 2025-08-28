@@ -20,7 +20,7 @@ build:
     
     # Frontend build
     - cd frontend
-    - sudo chown -R gitlab-runner:gitlab-runner .next || true
+    - chmod -R +w .next || true
     - rm -rf .next || true
     - npm install
     - npm run build
@@ -46,7 +46,7 @@ deploy:production:
     - git clean -fd || true
     - git pull origin main
     - cd frontend
-    - sudo chown -R gitlab-runner:gitlab-runner .next || true
+    - chmod -R +w .next || true
     - rm -rf .next || true
     - npm run build
     - cd ../backend
