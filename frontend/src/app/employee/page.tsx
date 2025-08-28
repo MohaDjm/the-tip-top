@@ -44,29 +44,6 @@ interface EmployeeStats {
   totalClaimed: number;
 }
 
-interface ConversionMetrics {
-  funnel: {
-    authPageViews: number;
-    totalRegistrations: number;
-    usersWithParticipations: number;
-    claimedPrizes: number;
-  };
-  conversionRates: {
-    registrationRate: number;
-    participationRate: number;
-    claimRate: number;
-  };
-  objectives: {
-    registrations: number;
-    participations: number;
-    claims: number;
-  };
-  todayProgress: {
-    registrations: number;
-    participations: number;
-    claims: number;
-  };
-}
 
 export default function EmployeePage() {
   const [activeTab, setActiveTab] = useState('unclaimed');
@@ -75,7 +52,6 @@ export default function EmployeePage() {
   const [employeeStats, setEmployeeStats] = useState<EmployeeStats | null>(null);
   const [unclaimedPrizes, setUnclaimedPrizes] = useState<UnclaimedPrize[]>([]);
   const [claimedPrizes, setClaimedPrizes] = useState<ClaimedPrize[]>([]);
-  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     // Check employee authentication
@@ -94,7 +70,6 @@ export default function EmployeePage() {
         window.location.href = '/';
         return;
       }
-      setUser(parsedUser);
       loadEmployeeData(token);
     } catch (error) {
       console.error('Error parsing user data:', error);
@@ -165,16 +140,18 @@ export default function EmployeePage() {
 
   const filteredUnclaimedPrizes = unclaimedPrizes.filter(prize => {
     const fullName = `${prize.user.firstName} ${prize.user.lastName}`;
+    const codeValue = prize.code?.code || '';
     return fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
            prize.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           prize.code.code.toLowerCase().includes(searchTerm.toLowerCase());
+           codeValue.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const filteredClaimedPrizes = claimedPrizes.filter(prize => {
     const fullName = `${prize.user.firstName} ${prize.user.lastName}`;
+    const codeValue = prize.code?.code || '';
     return fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
            prize.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           prize.code.code.toLowerCase().includes(searchTerm.toLowerCase());
+           codeValue.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const getPrizeIcon = (prizeName: string) => {
@@ -318,7 +295,7 @@ export default function EmployeePage() {
                           {prize.gain.name}
                         </h3>
                         <div className="flex items-center space-x-4 text-sm text-gray-600 font-['Lato']">
-                          <span>Code: <span className="font-mono font-medium">{prize.code.code}</span></span>
+                          <span>Code: <span className="font-mono font-medium">{prize.code?.code || 'N/A'}</span></span>
                           <span>•</span>
                           <span>Participation: {formatDate(prize.participationDate)}</span>
                           <span>•</span>
@@ -407,7 +384,7 @@ export default function EmployeePage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-gray-900">
-                        {prize.code.code}
+                        {prize.code?.code || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-['Lato'] text-sm text-gray-500">
                         {formatDate(prize.participationDate)}
