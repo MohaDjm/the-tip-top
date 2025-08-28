@@ -10,10 +10,6 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import Redis from 'ioredis';
-import { authMiddleware, roleMiddleware } from './middlewares/auth.middleware';
-import { AuthRequest } from './types/auth.types';
-import { codeService } from './services/code.service';
-import { authService } from './services/auth.service';
 import { EmailService } from './services/email.service';
 
 dotenv.config();

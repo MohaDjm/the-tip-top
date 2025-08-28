@@ -15,11 +15,16 @@ build:
     - git clone https://gitlab.com/MohaDjm/the-tip-top.git $PROJECT_PATH || true
     - cd $PROJECT_PATH
     - git pull origin main
+    
+    # Frontend build
     - cd frontend
     - npm install
     - npm run build
+    
+    # Backend build
     - cd ../backend
     - npm install
+    - npx prisma generate
     - npm run build
   only:
     - main
