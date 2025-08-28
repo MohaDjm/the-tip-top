@@ -36,6 +36,35 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const email = formData.get('email') as string;
+
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('✅ Inscription réussie ! Merci de vous être abonné à notre newsletter.');
+        form.reset();
+      } else {
+        alert('❌ Erreur lors de l\'inscription : ' + (data.message || 'Erreur inconnue'));
+      }
+    } catch (error) {
+      console.error('Newsletter subscription error:', error);
+      alert('❌ Erreur de connexion. Veuillez réessayer plus tard.');
+    }
+  };
+
   const handleParticipateClick = () => {
     if (isLoggedIn) {
       router.push('/dashboard');
@@ -174,10 +203,10 @@ export default function Home() {
             Recevez nos dernières nouveautés, offres exclusives et les résultats de nos jeux concours !
           </p>
           
-          <form id="newsletter-form" className="max-w-md mx-auto flex gap-3">
+          <form onSubmit={handleNewsletterSubmit} className="max-w-md mx-auto flex gap-3">
             <input
               type="email"
-              id="newsletter-email"
+              name="email"
               placeholder="Votre adresse email"
               required
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-['Lato'] focus:outline-none focus:ring-2 focus:ring-[#2C5545] focus:border-transparent"
@@ -186,7 +215,7 @@ export default function Home() {
               type="submit"
               className="bg-[#2C5545] text-white px-6 py-3 rounded-lg font-['Lato'] font-semibold hover:bg-[#1a3329] transition-colors"
             >
-              S'abonner
+              S&apos;abonner
             </button>
           </form>
           
