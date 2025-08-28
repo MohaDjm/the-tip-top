@@ -1045,8 +1045,8 @@ app.get('/api/admin/analytics/cta-performance', authMiddleware, roleMiddleware([
       orderBy: { _count: { id: 'desc' } }
     });
 
-    const formattedData = ctaPerformance.map(item => {
-      const data = JSON.parse(item.eventData);
+    const formattedData = ctaPerformance.map((item: any) => {
+      const data = JSON.parse(item.eventData as string);
       return {
         ctaName: data.ctaName || 'CTA inconnu',
         clicks: item._count.id,
@@ -1073,7 +1073,9 @@ app.get('/api/admin/analytics/conversion-funnel', authMiddleware, roleMiddleware
     const authPageViews = await prisma.analytics.count({
       where: {
         eventType: 'page_view',
-        eventData: { contains: '/auth' }
+        eventData: {
+          contains: 'auth_page'
+        }
       }
     });
 

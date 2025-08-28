@@ -14,8 +14,11 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const ioredis_1 = __importDefault(require("ioredis"));
+const email_service_1 = require("./services/email.service");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+// Trust proxy pour Nginx reverse proxy
+app.set('trust proxy', true);
 const prisma = new client_1.PrismaClient();
 const redis = new ioredis_1.default(process.env.REDIS_URL || 'redis://localhost:6379');
 // Configuration CORS globale
@@ -24,10 +27,12 @@ app.use((req, res, next) => {
     const allowedOrigins = [
         'http://localhost:3000',
         'http://localhost:3001',
+        'http://164.68.103.88',
         process.env.FRONTEND_URL
     ].filter(Boolean);
-    if (allowedOrigins.includes(origin)) {
-        res.header('Access-Control-Allow-Origin', origin);
+    // Pour les requêtes via Nginx reverse proxy, accepter toutes les origines du même domaine
+    if (allowedOrigins.includes(origin) || !origin) {
+        res.header('Access-Control-Allow-Origin', origin || '*');
     }
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -209,7 +214,7 @@ app.post('/api/auth/social', async (req, res) => {
 // ROUTES DE PARTICIPATION
 // ===========================
 // Vérifier un code sans le marquer comme utilisé (pour la roue)
-app.post('/api/participation/check-code', authMiddleware, async (req, res) => {
+const handleValidateCode = async (req, res) => {
     try {
         const { code } = req.body;
         // Vérifier le format du code (10 caractères numériques)
@@ -241,7 +246,10 @@ app.post('/api/participation/check-code', authMiddleware, async (req, res) => {
         console.error('Erreur vérification code:', error);
         res.status(500).json({ error: 'Erreur lors de la vérification du code' });
     }
-});
+};
+// === DÉFINIR LES DEUX ROUTES QUI UTILISENT LA MÊME LOGIQUE ===
+app.post('/api/participation/check-code', authMiddleware, handleValidateCode);
+app.post('/api/participation/validate-code', authMiddleware, handleValidateCode);
 // Marquer un code comme utilisé après animation (claim)
 app.post('/api/participation/claim', authMiddleware, async (req, res) => {
     console.log('🎯 Début de la réclamation du code:', req.body.code);
@@ -543,6 +551,41 @@ app.post('/api/employee/mark-claimed', authMiddleware, roleMiddleware(['EMPLOYEE
 // ===========================
 // ROUTES ADMINISTRATION
 // ===========================
+// Dashboard stats (new endpoint for frontend)
+app.get('/api/admin/dashboard/stats', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
+    try {
+        const [totalUsers, totalParticipations, totalCodes, usedCodes, claimedPrizes, totalGains] = await Promise.all([
+            prisma.user.count(),
+            prisma.participation.count(),
+            prisma.code.count(),
+            prisma.code.count({ where: { isUsed: true } }),
+            prisma.participation.count({ where: { isClaimed: true } }),
+            prisma.gain.count()
+        ]);
+        const stats = {
+            totalUsers,
+            totalParticipations,
+            totalCodes,
+            usedCodes,
+            availableCodes: totalCodes - usedCodes,
+            claimedPrizes,
+            unclaimedPrizes: totalParticipations - claimedPrizes,
+            totalGains
+        };
+        res.json({
+            success: true,
+            message: 'Dashboard stats retrieved successfully',
+            data: stats
+        });
+    }
+    catch (error) {
+        console.error('Get dashboard stats error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve dashboard stats'
+        });
+    }
+});
 // Statistiques générales
 app.get('/api/admin/stats', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
     try {
@@ -620,7 +663,7 @@ app.get('/api/admin/stats', authMiddleware, roleMiddleware(['ADMIN']), async (re
     }
     catch (error) {
         console.error('Erreur statistiques:', error);
-        res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des statistiques' });
     }
 });
 // Participations récentes pour admin
@@ -641,14 +684,84 @@ app.get('/api/admin/recent-participations', authMiddleware, roleMiddleware(['ADM
                 }
             }
         });
-        res.json(recentParticipations);
+        res.json({ success: true, data: recentParticipations });
     }
     catch (error) {
         console.error('Erreur participations récentes:', error);
-        res.status(500).json({ error: 'Erreur lors de la récupération des participations récentes' });
+        res.status(500).json({ success: false, message: 'Erreur lors de la récupération des participations récentes' });
     }
 });
-// Gains pour admin
+// Public gains endpoint (basic info)
+app.get('/api/gains', async (req, res) => {
+    try {
+        const gains = await prisma.gain.findMany({
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                value: true,
+                quantity: true,
+                remainingQuantity: true
+            }
+        });
+        res.json({
+            success: true,
+            data: gains
+        });
+    }
+    catch (error) {
+        console.error('Erreur gains publics:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de la récupération des gains'
+        });
+    }
+});
+// Newsletter subscription endpoint
+app.post('/api/newsletter/subscribe', async (req, res) => {
+    try {
+        const { email, firstName } = req.body;
+        if (!email || !email.includes('@')) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email valide requis'
+            });
+        }
+        // Check if email already subscribed
+        const existingSubscription = await prisma.newsletterSubscription.findUnique({
+            where: { email }
+        });
+        if (existingSubscription) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cette adresse email est déjà abonnée à notre newsletter'
+            });
+        }
+        // Create subscription
+        await prisma.newsletterSubscription.create({
+            data: {
+                email,
+                firstName: firstName || null,
+                subscribedAt: new Date()
+            }
+        });
+        // Send welcome email
+        const emailService = new email_service_1.EmailService();
+        await emailService.sendNewsletterWelcome(email, firstName);
+        res.json({
+            success: true,
+            message: 'Inscription à la newsletter réussie ! Vérifiez votre email.'
+        });
+    }
+    catch (error) {
+        console.error('Erreur inscription newsletter:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de l\'inscription à la newsletter'
+        });
+    }
+});
+// Gains pour admin (detailed info)
 app.get('/api/admin/gains', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
     try {
         const gains = await prisma.gain.findMany({
@@ -723,6 +836,226 @@ app.get('/api/admin/users', authMiddleware, roleMiddleware(['ADMIN']), async (re
     catch (error) {
         console.error('Erreur utilisateurs:', error);
         res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs' });
+    }
+});
+// Analytics endpoints
+app.get('/api/admin/analytics/stats', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
+    try {
+        // Page views
+        const pageViews = await prisma.analytics.count({
+            where: { eventType: 'page_view' }
+        });
+        // Newsletter subscriptions
+        const newsletterSubscriptions = await prisma.newsletterSubscription.count();
+        // CTA clicks
+        const ctaClicks = await prisma.analytics.count({
+            where: { eventType: 'cta_click' }
+        });
+        // Conversion rate (participations vs page views)
+        const totalParticipations = await prisma.participation.count();
+        const conversionRate = pageViews > 0 ? ((totalParticipations / pageViews) * 100).toFixed(2) : '0';
+        res.json({
+            success: true,
+            data: {
+                pageViews,
+                newsletterSubscriptions,
+                ctaClicks,
+                totalParticipations,
+                conversionRate: parseFloat(conversionRate)
+            }
+        });
+    }
+    catch (error) {
+        console.error('Analytics stats error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de la récupération des statistiques analytics'
+        });
+    }
+});
+app.get('/api/admin/analytics/top-pages', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
+    try {
+        const topPages = await prisma.analytics.groupBy({
+            by: ['eventData'],
+            where: { eventType: 'page_view' },
+            _count: { id: true },
+            orderBy: { _count: { id: 'desc' } },
+            take: 10
+        });
+        const formattedPages = topPages.map((page) => ({
+            page: JSON.parse(page.eventData).page || 'Unknown',
+            views: page._count.id
+        }));
+        res.json({
+            success: true,
+            data: formattedPages
+        });
+    }
+    catch (error) {
+        console.error('Top pages error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de la récupération des pages populaires'
+        });
+    }
+});
+app.get('/api/admin/analytics/cta-performance', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
+    try {
+        const ctaPerformance = await prisma.analytics.groupBy({
+            by: ['eventData'],
+            where: { eventType: 'cta_click' },
+            _count: { id: true },
+            orderBy: { _count: { id: 'desc' } }
+        });
+        const formattedData = ctaPerformance.map((item) => {
+            const data = JSON.parse(item.eventData);
+            return {
+                ctaName: data.ctaName || 'CTA inconnu',
+                clicks: item._count.id,
+                location: data.location || 'Non spécifié'
+            };
+        });
+        res.json({
+            success: true,
+            data: formattedData
+        });
+    }
+    catch (error) {
+        console.error('CTA performance error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de la récupération des performances CTA'
+        });
+    }
+});
+app.get('/api/admin/analytics/conversion-funnel', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
+    try {
+        // Get page views on auth page (registration intent)
+        const authPageViews = await prisma.analytics.count({
+            where: {
+                eventType: 'page_view',
+                eventData: {
+                    contains: 'auth_page'
+                }
+            }
+        });
+        // Get total registrations
+        const totalRegistrations = await prisma.user.count();
+        // Get users who participated after registration
+        const usersWithParticipations = await prisma.user.count({
+            where: {
+                participations: {
+                    some: {}
+                }
+            }
+        });
+        // Get total participations
+        const totalParticipations = await prisma.participation.count();
+        // Get claimed prizes
+        const claimedPrizes = await prisma.participation.count({
+            where: { isClaimed: true }
+        });
+        // Calculate conversion rates
+        const registrationRate = authPageViews > 0 ? ((totalRegistrations / authPageViews) * 100).toFixed(2) : '0';
+        const participationRate = totalRegistrations > 0 ? ((usersWithParticipations / totalRegistrations) * 100).toFixed(2) : '0';
+        const claimRate = totalParticipations > 0 ? ((claimedPrizes / totalParticipations) * 100).toFixed(2) : '0';
+        // Get daily objectives (mock data - you can make this configurable)
+        const dailyObjectives = {
+            registrations: 50,
+            participations: 30,
+            claims: 20
+        };
+        // Calculate today's progress
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const todayRegistrations = await prisma.user.count({
+            where: {
+                createdAt: {
+                    gte: today,
+                    lt: tomorrow
+                }
+            }
+        });
+        const todayParticipations = await prisma.participation.count({
+            where: {
+                participationDate: {
+                    gte: today,
+                    lt: tomorrow
+                }
+            }
+        });
+        const todayClaims = await prisma.participation.count({
+            where: {
+                claimedAt: {
+                    gte: today,
+                    lt: tomorrow
+                }
+            }
+        });
+        res.json({
+            success: true,
+            data: {
+                funnel: {
+                    authPageViews,
+                    totalRegistrations,
+                    usersWithParticipations,
+                    totalParticipations,
+                    claimedPrizes
+                },
+                conversionRates: {
+                    registrationRate: parseFloat(registrationRate),
+                    participationRate: parseFloat(participationRate),
+                    claimRate: parseFloat(claimRate)
+                },
+                objectives: dailyObjectives,
+                todayProgress: {
+                    registrations: todayRegistrations,
+                    participations: todayParticipations,
+                    claims: todayClaims
+                }
+            }
+        });
+    }
+    catch (error) {
+        console.error('Conversion funnel error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de la récupération du funnel de conversion'
+        });
+    }
+});
+app.post('/api/analytics/track', async (req, res) => {
+    try {
+        const { eventType, eventData, userId, sessionId } = req.body;
+        if (!eventType) {
+            return res.status(400).json({
+                success: false,
+                message: 'Type d\'événement requis'
+            });
+        }
+        await prisma.analytics.create({
+            data: {
+                eventType,
+                eventData: JSON.stringify(eventData),
+                userId: userId || null,
+                sessionId: sessionId || null,
+                ipAddress: req.ip || 'unknown',
+                userAgent: req.get('User-Agent') || 'unknown'
+            }
+        });
+        res.json({
+            success: true,
+            message: 'Événement tracké avec succès'
+        });
+    }
+    catch (error) {
+        console.error('Analytics tracking error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors du tracking'
+        });
     }
 });
 // Stats pour employé
@@ -946,8 +1279,8 @@ app.get('/api/health', async (req, res) => {
     }
 });
 // Démarrage du serveur
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+const PORT = parseInt(process.env.PORT || '3002', 10);
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 API démarrée sur le port ${PORT}`);
     console.log(`📊 Environnement: ${process.env.NODE_ENV || 'development'}`);
 });

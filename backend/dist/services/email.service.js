@@ -101,6 +101,22 @@ class EmailService {
             throw error;
         }
     }
+    async sendNewsletterWelcome(email, firstName) {
+        try {
+            const mailOptions = {
+                from: process.env.FROM_EMAIL || 'noreply@thetiptop.com',
+                to: email,
+                subject: '🍃 Bienvenue dans la newsletter Thé Tip Top !',
+                html: this.getNewsletterWelcomeTemplate(firstName || 'Amateur de thé')
+            };
+            await this.transporter.sendMail(mailOptions);
+            logger_1.logger.info(`Newsletter welcome email sent to ${email}`);
+        }
+        catch (error) {
+            logger_1.logger.error('Failed to send newsletter welcome email:', error);
+            throw error;
+        }
+    }
     getWelcomeEmailTemplate(firstName) {
         return `
       <!DOCTYPE html>
@@ -255,6 +271,43 @@ class EmailService {
           <p>Votre prix vous attend en boutique ! N'oubliez pas d'apporter une pièce d'identité pour le retirer.</p>
           
           <p>Félicitations encore une fois !</p>
+          
+          <p>L'équipe Thé Tip Top</p>
+        </div>
+      </body>
+      </html>
+    `;
+    }
+    getNewsletterWelcomeTemplate(firstName) {
+        return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Newsletter Thé Tip Top</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #2c5530;">🍃 Bienvenue ${firstName} !</h1>
+          
+          <p>Merci de vous être abonné(e) à notre newsletter !</p>
+          
+          <p>Vous recevrez désormais :</p>
+          
+          <ul>
+            <li>🆕 Nos dernières nouveautés thé</li>
+            <li>🎁 Des offres exclusives et promotions</li>
+            <li>🎯 Les résultats de nos jeux concours</li>
+            <li>📚 Des conseils d'experts pour bien infuser vos thés</li>
+            <li>🏪 Les événements dans nos boutiques</li>
+          </ul>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <h3 style="color: #2c5530; margin: 0 0 10px 0;">N'oubliez pas !</h3>
+            <p style="margin: 0;">Participez à notre grand jeu concours 100% gagnant pour remporter des thés d'exception et bien plus encore !</p>
+          </div>
+          
+          <p>À très bientôt pour de nouvelles aventures théinées !</p>
           
           <p>L'équipe Thé Tip Top</p>
         </div>
