@@ -20,7 +20,7 @@ build:
     
     # Frontend build
     - cd frontend
-    - mv .next .next_backup 2>/dev/null || true
+    - rm -rf .next || true
     - npm install
     - npm run build
     
@@ -45,7 +45,7 @@ deploy:production:
     - git clean -fd || true
     - git pull origin main
     - cd frontend
-    - mv .next .next_backup 2>/dev/null || true
+    - rm -rf .next || true
     - npm run build
     - cd ../backend
     - cp .env.production .env

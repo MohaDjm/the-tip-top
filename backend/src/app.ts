@@ -64,8 +64,7 @@ app.use(morgan('combined'));
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limite de 100 requêtes
-  message: 'Trop de requêtes, veuillez réessayer plus tard',
-  trustProxy: false // Désactive trust proxy pour rate limiting
+  message: 'Trop de requêtes, veuillez réessayer plus tard'
 });
 
 app.use('/api/', limiter);
