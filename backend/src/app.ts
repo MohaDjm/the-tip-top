@@ -1237,10 +1237,13 @@ app.get('/api/employee/unclaimed-prizes', authMiddleware, roleMiddleware(['EMPLO
       where: { isClaimed: false },
       include: {
         user: {
-          select: { firstName: true, lastName: true, email: true }
+          select: { firstName: true, lastName: true, email: true, phone: true }
         },
         gain: {
           select: { name: true, value: true }
+        },
+        code: {
+          select: { code: true }
         }
       },
       orderBy: { participationDate: 'desc' }
@@ -1260,10 +1263,13 @@ app.get('/api/employee/claimed-prizes', authMiddleware, roleMiddleware(['EMPLOYE
       where: { isClaimed: true },
       include: {
         user: {
-          select: { firstName: true, lastName: true, email: true }
+          select: { firstName: true, lastName: true, email: true, phone: true }
         },
         gain: {
           select: { name: true, value: true }
+        },
+        code: {
+          select: { code: true }
         }
       },
       orderBy: { claimedAt: 'desc' }
