@@ -802,10 +802,10 @@ app.get('/api/admin/recent-participations', authMiddleware, roleMiddleware(['ADM
       }
     });
 
-    res.json(recentParticipations);
+    res.json({ success: true, data: recentParticipations });
   } catch (error) {
     console.error('Erreur participations récentes:', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération des participations récentes' });
+    res.status(500).json({ success: false, message: 'Erreur lors de la récupération des participations récentes' });
   }
 });
 
