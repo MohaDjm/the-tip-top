@@ -406,8 +406,10 @@ export default function AdminPage() {
 
             <div className="grid gap-6">
               {gains.map((gain) => {
-                const remainingCodes = gain.totalCodes - gain.usedCodes;
-                const usagePercentage = gain.totalCodes > 0 ? (gain.usedCodes / gain.totalCodes) * 100 : 0;
+                const totalCodes = gain.totalCodes || gain.quantity || 0;
+                const usedCodes = gain.usedCodes || (gain.quantity - (gain.remainingQuantity || 0)) || 0;
+                const remainingCodes = totalCodes - usedCodes;
+                const usagePercentage = totalCodes > 0 ? (usedCodes / totalCodes) * 100 : 0;
                 return (
                   <div key={gain.id} className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
                     <div className="flex items-center justify-between mb-4">
@@ -428,7 +430,7 @@ export default function AdminPage() {
                     
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-xl font-bold text-[#2C5545]">{gain.totalCodes.toLocaleString()}</div>
+                        <div className="text-xl font-bold text-[#2C5545]">{totalCodes.toLocaleString()}</div>
                         <div className="text-xs text-gray-600 font-['Lato']">Total codes</div>
                       </div>
                       <div className="text-center p-3 bg-gray-50 rounded-lg">
@@ -436,7 +438,7 @@ export default function AdminPage() {
                         <div className="text-xs text-gray-600 font-['Lato']">Restants</div>
                       </div>
                       <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-xl font-bold text-green-600">{gain.usedCodes.toLocaleString()}</div>
+                        <div className="text-xl font-bold text-green-600">{usedCodes.toLocaleString()}</div>
                         <div className="text-xs text-gray-600 font-['Lato']">Utilisés</div>
                       </div>
                     </div>
