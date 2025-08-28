@@ -935,7 +935,8 @@ app.get('/api/admin/analytics/conversion-funnel', authMiddleware, roleMiddleware
             where: {
                 eventType: 'page_view',
                 eventData: {
-                    contains: 'auth_page'
+                    path: ['page'],
+                    equals: 'auth_page'
                 }
             }
         });
