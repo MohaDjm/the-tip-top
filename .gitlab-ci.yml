@@ -20,13 +20,18 @@ build:
     
     # Frontend build
     - cd frontend
-    - chmod -R +w .next || true
-    - rm -rf .next || true
     - npm install
+    # Build in temporary directory to avoid permission issues
+    - mkdir -p ../temp-build/frontend
+    - cp -r . ../temp-build/frontend/
+    - cd ../temp-build/frontend
     - npm run build
+    # Copy build output back
+    - mkdir -p ../../the-tip-top/frontend/.next
+    - cp -r .next/* ../../the-tip-top/frontend/.next/ || true
     
     # Backend build
-    - cd ../backend
+    - cd ../../the-tip-top/backend
     - cp .env.production .env
     - npm install
     - npx prisma db push --accept-data-loss
@@ -46,10 +51,16 @@ deploy:production:
     - git clean -fd || true
     - git pull origin main
     - cd frontend
-    - chmod -R +w .next || true
-    - rm -rf .next || true
+    - npm install
+    # Build in temporary directory to avoid permission issues
+    - mkdir -p ../temp-build/frontend
+    - cp -r . ../temp-build/frontend/
+    - cd ../temp-build/frontend
     - npm run build
-    - cd ../backend
+    # Copy build output back
+    - mkdir -p ../../the-tip-top/frontend/.next
+    - cp -r .next/* ../../the-tip-top/frontend/.next/ || true
+    - cd ../../the-tip-top/backend
     - cp .env.production .env
     - npx prisma db push --accept-data-loss
     - npx prisma generate
