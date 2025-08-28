@@ -10,6 +10,11 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import Redis from 'ioredis';
+import { authMiddleware, roleMiddleware } from './middlewares/auth.middleware';
+import { AuthRequest } from './types/auth.types';
+import { codeService } from './services/code.service';
+import { authService } from './services/auth.service';
+import { EmailService } from './services/email.service';
 
 dotenv.config();
 
@@ -832,6 +837,56 @@ app.get('/api/gains', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des gains'
+    });
+  }
+});
+
+// Newsletter subscription endpoint
+app.post('/api/newsletter/subscribe', async (req: Request, res: Response) => {
+  try {
+    const { email, firstName } = req.body;
+
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email valide requis'
+      });
+    }
+
+    // Check if email already subscribed
+    const existingSubscription = await prisma.newsletterSubscription.findUnique({
+      where: { email }
+    });
+
+    if (existingSubscription) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cette adresse email est déjà abonnée à notre newsletter'
+      });
+    }
+
+    // Create subscription
+    await prisma.newsletterSubscription.create({
+      data: {
+        email,
+        firstName: firstName || null,
+        subscribedAt: new Date()
+      }
+    });
+
+    // Send welcome email
+    const emailService = new EmailService();
+    await emailService.sendNewsletterWelcome(email, firstName);
+
+    res.json({
+      success: true,
+      message: 'Inscription à la newsletter réussie ! Vérifiez votre email.'
+    });
+  } catch (error) {
+    console.error('Erreur inscription newsletter:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de l\'inscription à la newsletter'
     });
   }
 });

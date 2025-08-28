@@ -164,21 +164,53 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Newsletter Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto text-center px-6">
+          <h2 className="font-['Playfair_Display'] text-3xl md:text-4xl font-bold text-[#2C5545] mb-4">
+            Restez informé de nos actualités
+          </h2>
+          <p className="text-gray-600 font-['Lato'] text-lg mb-8">
+            Recevez nos dernières nouveautés, offres exclusives et les résultats de nos jeux concours !
+          </p>
+          
+          <form id="newsletter-form" className="max-w-md mx-auto flex gap-3">
+            <input
+              type="email"
+              id="newsletter-email"
+              placeholder="Votre adresse email"
+              required
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-['Lato'] focus:outline-none focus:ring-2 focus:ring-[#2C5545] focus:border-transparent"
+            />
+            <button
+              type="submit"
+              className="bg-[#2C5545] text-white px-6 py-3 rounded-lg font-['Lato'] font-semibold hover:bg-[#1a3329] transition-colors"
+            >
+              S'abonner
+            </button>
+          </form>
+          
+          <p className="text-gray-500 font-['Lato'] text-sm mt-4">
+            Pas de spam, désabonnement possible à tout moment.
+          </p>
+        </div>
+      </section>
+
       {/* Footer CTA */}
       <section className="py-20 bg-[#2C5545]">
         <div className="max-w-4xl mx-auto text-center px-6">
           <h2 className="font-['Playfair_Display'] text-3xl md:text-4xl font-bold text-white mb-4">
             Prêt à tenter votre chance ?
           </h2>
-          <p className="text-white/80 font-['Lato'] mb-8">
-            100% des participants gagnent ! Ne manquez pas cette opportunité unique.
+          <p className="text-white/90 font-['Lato'] text-lg mb-8">
+            Achetez un thé dans l'une de nos boutiques et participez à notre grand jeu concours !
           </p>
-          <button 
-            onClick={handleParticipateClick}
-            className="bg-[#D4B254] hover:bg-[#B8A049] text-black font-['Lato'] font-bold text-sm px-8 py-3 rounded-full transition-all duration-300 shadow-[0_4px_12px_rgba(212,178,84,0.3)] hover:shadow-[0_6px_20px_rgba(212,178,84,0.4)] transform hover:-translate-y-1 uppercase tracking-wide"
+          <Link 
+            href="/auth" 
+            className="inline-block bg-[#D4B254] text-[#2C5545] px-8 py-4 rounded-lg font-['Lato'] font-semibold text-lg hover:bg-[#C4A244] transition-colors"
           >
-            {isLoggedIn ? 'ACCÉDER À MON ESPACE' : 'COMMENCER À JOUER'}
-          </button>
+            Participer maintenant
+          </Link>
         </div>
       </section>
 

@@ -91,6 +91,25 @@ model GrandTirage {
   winner            User     @relation(fields: [winnerId], references: [id])
 }
 
+model NewsletterSubscription {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  firstName     String?
+  subscribedAt  DateTime @default(now())
+  isActive      Boolean  @default(true)
+}
+
+model Analytics {
+  id            String   @id @default(uuid())
+  eventType     String   // 'page_view', 'cta_click', 'registration', 'participation'
+  eventData     Json?    // Additional data for the event
+  userId        String?  // Optional user ID if logged in
+  sessionId     String   // Session identifier
+  ipAddress     String
+  userAgent     String
+  createdAt     DateTime @default(now())
+}
+
 enum Role {
   CLIENT
   EMPLOYEE
