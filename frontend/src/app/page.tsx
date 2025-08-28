@@ -5,9 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navigation from '../components/Navigation';
+import { useAnalytics } from '../utils/analytics';
 
 export default function Home() {
   const router = useRouter();
+  const { trackPageView, trackCTAClick, trackNewsletterSubscribe } = useAnalytics();
   const [timeLeft, setTimeLeft] = useState({
     hours: 15,
     minutes: 23,
@@ -16,6 +18,9 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    // Track page view
+    trackPageView('homepage');
+
     // Check if user is logged in
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
@@ -54,6 +59,7 @@ export default function Home() {
       const data = await response.json();
 
       if (data.success) {
+        trackNewsletterSubscribe(email);
         alert('✅ Inscription réussie ! Merci de vous être abonné à notre newsletter.');
         form.reset();
       } else {
@@ -66,6 +72,7 @@ export default function Home() {
   };
 
   const handleParticipateClick = () => {
+    trackCTAClick(isLoggedIn ? 'access-dashboard-hero' : 'participate-now-hero');
     if (isLoggedIn) {
       router.push('/dashboard');
     } else {
@@ -236,6 +243,7 @@ export default function Home() {
           </p>
           <Link 
             href="/auth" 
+            onClick={() => trackCTAClick('participate-now-footer')}
             className="inline-block bg-[#D4B254] text-[#2C5545] px-8 py-4 rounded-lg font-['Lato'] font-semibold text-lg hover:bg-[#C4A244] transition-colors"
           >
             Participer maintenant

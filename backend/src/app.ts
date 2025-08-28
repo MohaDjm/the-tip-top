@@ -969,6 +969,138 @@ app.get('/api/admin/users', authMiddleware, roleMiddleware(['ADMIN']), async (re
   }
 });
 
+// Analytics endpoints
+app.get('/api/admin/analytics/stats', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    // Page views
+    const pageViews = await prisma.analytics.count({
+      where: { eventType: 'page_view' }
+    });
+
+    // Newsletter subscriptions
+    const newsletterSubscriptions = await prisma.newsletterSubscription.count();
+
+    // CTA clicks
+    const ctaClicks = await prisma.analytics.count({
+      where: { eventType: 'cta_click' }
+    });
+
+    // Conversion rate (participations vs page views)
+    const totalParticipations = await prisma.participation.count();
+    const conversionRate = pageViews > 0 ? ((totalParticipations / pageViews) * 100).toFixed(2) : '0';
+
+    res.json({
+      success: true,
+      data: {
+        pageViews,
+        newsletterSubscriptions,
+        ctaClicks,
+        totalParticipations,
+        conversionRate: parseFloat(conversionRate)
+      }
+    });
+  } catch (error) {
+    console.error('Analytics stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des statistiques analytics'
+    });
+  }
+});
+
+app.get('/api/admin/analytics/top-pages', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const topPages = await prisma.analytics.groupBy({
+      by: ['eventData'],
+      where: { eventType: 'page_view' },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 10
+    });
+
+    const formattedPages = topPages.map((page: any) => ({
+      page: JSON.parse(page.eventData as string).page || 'Unknown',
+      views: page._count.id
+    }));
+
+    res.json({
+      success: true,
+      data: formattedPages
+    });
+  } catch (error) {
+    console.error('Top pages error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des pages populaires'
+    });
+  }
+});
+
+app.get('/api/admin/analytics/cta-performance', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    const ctaPerformance = await prisma.analytics.groupBy({
+      by: ['eventData'],
+      where: { eventType: 'cta_click' },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } }
+    });
+
+    const formattedCtas = ctaPerformance.map((cta: any) => {
+      const data = JSON.parse(cta.eventData as string);
+      return {
+        cta: data.cta || data.button || 'Unknown CTA',
+        clicks: cta._count.id
+      };
+    });
+
+    res.json({
+      success: true,
+      data: formattedCtas
+    });
+  } catch (error) {
+    console.error('CTA performance error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des performances CTA'
+    });
+  }
+});
+
+app.post('/api/analytics/track', async (req: Request, res: Response) => {
+  try {
+    const { eventType, eventData, userId, sessionId } = req.body;
+
+    if (!eventType) {
+      return res.status(400).json({
+        success: false,
+        message: 'Type d\'événement requis'
+      });
+    }
+
+    await prisma.analytics.create({
+      data: {
+        eventType,
+        eventData: JSON.stringify(eventData),
+        userId: userId || null,
+        sessionId: sessionId || null,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent') || null
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Événement tracké avec succès'
+    });
+  } catch (error) {
+    console.error('Analytics tracking error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors du tracking'
+    });
+  }
+});
+
 // Stats pour employé
 app.get('/api/employee/stats', authMiddleware, roleMiddleware(['EMPLOYEE', 'ADMIN']), async (req: AuthRequest, res: Response) => {
   try {

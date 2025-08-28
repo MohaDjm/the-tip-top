@@ -39,15 +39,45 @@ export default function AnalyticsPage() {
   const loadAnalyticsData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/admin/analytics?range=${dateRange}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      
+      // Load main analytics stats
+      const [statsResponse, topPagesResponse, ctaResponse] = await Promise.all([
+        fetch('/api/admin/analytics/stats', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('/api/admin/analytics/top-pages', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('/api/admin/analytics/cta-performance', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
 
-      if (response.ok) {
-        const data = await response.json();
-        setAnalyticsData(data.data);
+      if (statsResponse.ok && topPagesResponse.ok && ctaResponse.ok) {
+        const [statsData, topPagesData, ctaData] = await Promise.all([
+          statsResponse.json(),
+          topPagesResponse.json(),
+          ctaResponse.json()
+        ]);
+
+        // Mock conversion funnel data
+        const conversionFunnel = [
+          { step: 'Visiteurs', count: statsData.data.pageViews, percentage: 100 },
+          { step: 'Clics CTA', count: statsData.data.ctaClicks, percentage: statsData.data.pageViews > 0 ? (statsData.data.ctaClicks / statsData.data.pageViews) * 100 : 0 },
+          { step: 'Participations', count: statsData.data.totalParticipations, percentage: statsData.data.conversionRate }
+        ];
+
+        setAnalyticsData({
+          totalPageViews: statsData.data.pageViews,
+          totalRegistrations: statsData.data.totalParticipations, // Using participations as registrations
+          totalParticipations: statsData.data.totalParticipations,
+          conversionRate: statsData.data.conversionRate,
+          ctaClicks: statsData.data.ctaClicks,
+          newsletterSubscriptions: statsData.data.newsletterSubscriptions,
+          topPages: topPagesData.data || [],
+          conversionFunnel,
+          dailyStats: [] // Placeholder for future implementation
+        });
       }
     } catch (error) {
       console.error('Erreur chargement analytics:', error);
