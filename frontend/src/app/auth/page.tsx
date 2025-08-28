@@ -1,14 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiCall } from '@/lib/api';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
+import { useAnalytics } from '@/utils/analytics';
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const { trackPageView, trackCTAClick } = useAnalytics();
+
+  // Track page view on component mount
+  useEffect(() => {
+    trackPageView('auth_page', { tab: activeTab });
+  }, [trackPageView, activeTab]);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -73,6 +80,9 @@ export default function AuthPage() {
           }),
         });
 
+        // Track successful registration
+        trackCTAClick('register_success', { email: formData.email });
+        
         // Store token and redirect after successful registration
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));

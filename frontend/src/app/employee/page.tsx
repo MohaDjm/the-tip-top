@@ -44,6 +44,30 @@ interface EmployeeStats {
   totalClaimed: number;
 }
 
+interface ConversionMetrics {
+  funnel: {
+    authPageViews: number;
+    totalRegistrations: number;
+    usersWithParticipations: number;
+    claimedPrizes: number;
+  };
+  conversionRates: {
+    registrationRate: number;
+    participationRate: number;
+    claimRate: number;
+  };
+  objectives: {
+    registrations: number;
+    participations: number;
+    claims: number;
+  };
+  todayProgress: {
+    registrations: number;
+    participations: number;
+    claims: number;
+  };
+}
+
 export default function EmployeePage() {
   const [activeTab, setActiveTab] = useState('unclaimed');
   const [searchTerm, setSearchTerm] = useState('');

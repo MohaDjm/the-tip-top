@@ -45,6 +45,8 @@ export default function AdminPage() {
   const [recentParticipations, setRecentParticipations] = useState<any[]>([]);
   const [gains, setGains] = useState<any[]>([]);
   const [employeeStats, setEmployeeStats] = useState<any>(null);
+  const [conversionMetrics, setConversionMetrics] = useState<any>(null);
+  const [ctaPerformance, setCTAPerformance] = useState<any[]>([]);
   const [unclaimedPrizes, setUnclaimedPrizes] = useState<Record<string, unknown>[]>([]);
   const [claimedPrizes, setClaimedPrizes] = useState<Record<string, unknown>[]>([]);
   const [participations, setParticipations] = useState<Record<string, unknown>[]>([]);
@@ -120,7 +122,31 @@ export default function AdminPage() {
         }
       });
       console.log('Employee stats response:', empStats);
-      setEmployeeStats(empStats);
+      if (empStats.success && empStats.data) {
+        setEmployeeStats(empStats.data);
+      }
+
+      // Load conversion metrics
+      const conversionResult = await apiCall('/admin/analytics/conversion-funnel', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      console.log('Conversion metrics response:', conversionResult);
+      if (conversionResult.success && conversionResult.data) {
+        setConversionMetrics(conversionResult.data);
+      }
+
+      // Load CTA performance
+      const ctaResult = await apiCall('/admin/analytics/cta-performance', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      console.log('CTA performance response:', ctaResult);
+      if (ctaResult.success && ctaResult.data) {
+        setCTAPerformance(ctaResult.data);
+      }
 
       const unclaimed = await apiCall('/employee/unclaimed-prizes', {
         headers: {
@@ -246,6 +272,7 @@ export default function AdminPage() {
         <div className="flex space-x-1 mb-8 bg-gray-100 rounded-lg p-1">
           {[
             { id: 'dashboard', label: 'Tableau de bord', icon: '📊' },
+            { id: 'analytics', label: 'Analytics & Conversion', icon: '📈' },
             { id: 'participations', label: 'Participations', icon: '🎯' },
             { id: 'users', label: 'Utilisateurs', icon: '👥' },
             { id: 'gains', label: 'Gestion des gains', icon: '🎁' },
@@ -389,6 +416,115 @@ export default function AdminPage() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Analytics & Conversion Tab */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            <h2 className="font-['Playfair_Display'] text-2xl font-bold text-[#2C5545]">
+              Analytics & Conversion
+            </h2>
+
+            {/* Conversion Funnel */}
+            {conversionMetrics && (
+              <div className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+                <h3 className="font-['Lato'] font-bold text-lg text-[#2C5545] mb-6">Funnel de Conversion</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{conversionMetrics.funnel?.authPageViews || 0}</div>
+                    <div className="text-sm text-gray-600">Visites page inscription</div>
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="text-2xl">→</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{conversionMetrics.funnel?.totalRegistrations || 0}</div>
+                    <div className="text-sm text-gray-600">Inscriptions</div>
+                    <div className="text-xs text-green-600 font-semibold">{conversionMetrics.conversionRates?.registrationRate || 0}%</div>
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="text-2xl">→</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">{conversionMetrics.funnel?.usersWithParticipations || 0}</div>
+                    <div className="text-sm text-gray-600">Participations</div>
+                    <div className="text-xs text-purple-600 font-semibold">{conversionMetrics.conversionRates?.participationRate || 0}%</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Daily Objectives */}
+            {conversionMetrics && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+                  <h4 className="font-['Lato'] font-bold text-[#2C5545] mb-4">Objectif Inscriptions</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-600">Aujourd'hui</span>
+                    <span className="text-sm font-semibold">{conversionMetrics.todayProgress?.registrations || 0} / {conversionMetrics.objectives?.registrations || 50}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className="bg-green-500 h-3 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${Math.min(100, ((conversionMetrics.todayProgress?.registrations || 0) / (conversionMetrics.objectives?.registrations || 50)) * 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+                  <h4 className="font-['Lato'] font-bold text-[#2C5545] mb-4">Objectif Participations</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-600">Aujourd'hui</span>
+                    <span className="text-sm font-semibold">{conversionMetrics.todayProgress?.participations || 0} / {conversionMetrics.objectives?.participations || 30}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className="bg-blue-500 h-3 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${Math.min(100, ((conversionMetrics.todayProgress?.participations || 0) / (conversionMetrics.objectives?.participations || 30)) * 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+                  <h4 className="font-['Lato'] font-bold text-[#2C5545] mb-4">Objectif Réclamations</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-600">Aujourd'hui</span>
+                    <span className="text-sm font-semibold">{conversionMetrics.todayProgress?.claims || 0} / {conversionMetrics.objectives?.claims || 20}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className="bg-purple-500 h-3 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${Math.min(100, ((conversionMetrics.todayProgress?.claims || 0) / (conversionMetrics.objectives?.claims || 20)) * 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CTA Performance */}
+            {ctaPerformance && ctaPerformance.length > 0 && (
+              <div className="bg-white rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+                <h3 className="font-['Lato'] font-bold text-lg text-[#2C5545] mb-6">Performance des CTA</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {ctaPerformance.map((cta: any, index: number) => (
+                    <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-semibold text-[#2C5545] mb-2">{cta.ctaName}</h4>
+                      <div className="text-2xl font-bold text-[#D4B254] mb-1">{cta.clicks}</div>
+                      <div className="text-sm text-gray-600">clics</div>
+                      <div className="text-xs text-gray-500 mt-1">{cta.location}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -1045,23 +1045,131 @@ app.get('/api/admin/analytics/cta-performance', authMiddleware, roleMiddleware([
       orderBy: { _count: { id: 'desc' } }
     });
 
-    const formattedCtas = ctaPerformance.map((cta: any) => {
-      const data = JSON.parse(cta.eventData as string);
+    const formattedData = ctaPerformance.map(item => {
+      const data = JSON.parse(item.eventData);
       return {
-        cta: data.cta || data.button || 'Unknown CTA',
-        clicks: cta._count.id
+        ctaName: data.ctaName || 'CTA inconnu',
+        clicks: item._count.id,
+        location: data.location || 'Non spécifié'
       };
     });
 
     res.json({
       success: true,
-      data: formattedCtas
+      data: formattedData
     });
   } catch (error) {
     console.error('CTA performance error:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des performances CTA'
+    });
+  }
+});
+
+app.get('/api/admin/analytics/conversion-funnel', authMiddleware, roleMiddleware(['ADMIN']), async (req: AuthRequest, res: Response) => {
+  try {
+    // Get page views on auth page (registration intent)
+    const authPageViews = await prisma.analytics.count({
+      where: {
+        eventType: 'page_view',
+        eventData: { contains: '/auth' }
+      }
+    });
+
+    // Get total registrations
+    const totalRegistrations = await prisma.user.count();
+
+    // Get users who participated after registration
+    const usersWithParticipations = await prisma.user.count({
+      where: {
+        participations: {
+          some: {}
+        }
+      }
+    });
+
+    // Get total participations
+    const totalParticipations = await prisma.participation.count();
+
+    // Get claimed prizes
+    const claimedPrizes = await prisma.participation.count({
+      where: { isClaimed: true }
+    });
+
+    // Calculate conversion rates
+    const registrationRate = authPageViews > 0 ? ((totalRegistrations / authPageViews) * 100).toFixed(2) : '0';
+    const participationRate = totalRegistrations > 0 ? ((usersWithParticipations / totalRegistrations) * 100).toFixed(2) : '0';
+    const claimRate = totalParticipations > 0 ? ((claimedPrizes / totalParticipations) * 100).toFixed(2) : '0';
+
+    // Get daily objectives (mock data - you can make this configurable)
+    const dailyObjectives = {
+      registrations: 50,
+      participations: 30,
+      claims: 20
+    };
+
+    // Calculate today's progress
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const todayRegistrations = await prisma.user.count({
+      where: {
+        createdAt: {
+          gte: today,
+          lt: tomorrow
+        }
+      }
+    });
+
+    const todayParticipations = await prisma.participation.count({
+      where: {
+        participationDate: {
+          gte: today,
+          lt: tomorrow
+        }
+      }
+    });
+
+    const todayClaims = await prisma.participation.count({
+      where: {
+        claimedAt: {
+          gte: today,
+          lt: tomorrow
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        funnel: {
+          authPageViews,
+          totalRegistrations,
+          usersWithParticipations,
+          totalParticipations,
+          claimedPrizes
+        },
+        conversionRates: {
+          registrationRate: parseFloat(registrationRate),
+          participationRate: parseFloat(participationRate),
+          claimRate: parseFloat(claimRate)
+        },
+        objectives: dailyObjectives,
+        todayProgress: {
+          registrations: todayRegistrations,
+          participations: todayParticipations,
+          claims: todayClaims
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Conversion funnel error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération du funnel de conversion'
     });
   }
 });
