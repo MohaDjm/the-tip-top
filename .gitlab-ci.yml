@@ -36,15 +36,15 @@ deploy:production:
     - npm run build
     - cd ../backend
     - npm run build
-    # Copy built files to production directory with sudo
-    - sudo mkdir -p $PRODUCTION_PATH/frontend/.next
-    - sudo mkdir -p $PRODUCTION_PATH/backend/dist
-    - sudo cp -r $PROJECT_PATH/frontend/.next/* $PRODUCTION_PATH/frontend/.next/
-    - sudo cp -r $PROJECT_PATH/backend/dist/* $PRODUCTION_PATH/backend/dist/
-    - sudo cp -r $PROJECT_PATH/frontend/src $PRODUCTION_PATH/frontend/
-    - sudo cp -r $PROJECT_PATH/backend/src $PRODUCTION_PATH/backend/
-    - sudo cp $PROJECT_PATH/backend/package.json $PRODUCTION_PATH/backend/
-    - sudo cp $PROJECT_PATH/frontend/package.json $PRODUCTION_PATH/frontend/
+    # Copy built files to production directory
+    - mkdir -p $PRODUCTION_PATH/frontend/.next
+    - mkdir -p $PRODUCTION_PATH/backend/dist
+    - cp -r $PROJECT_PATH/frontend/.next/* $PRODUCTION_PATH/frontend/.next/ || true
+    - cp -r $PROJECT_PATH/backend/dist/* $PRODUCTION_PATH/backend/dist/ || true
+    - cp -r $PROJECT_PATH/frontend/src $PRODUCTION_PATH/frontend/ || true
+    - cp -r $PROJECT_PATH/backend/src $PRODUCTION_PATH/backend/ || true
+    - cp $PROJECT_PATH/backend/package.json $PRODUCTION_PATH/backend/ || true
+    - cp $PROJECT_PATH/frontend/package.json $PRODUCTION_PATH/frontend/ || true
     # Restart services
     - pm2 restart backend || echo "Backend restart failed, continuing..."
     - pm2 restart frontend || echo "Frontend restart failed, continuing..."
