@@ -316,7 +316,7 @@ export default function DashboardPage() {
                               <span className="text-2xl">🎫</span>
                               <div>
                                 <h3 className="font-['Playfair_Display'] text-lg font-semibold text-[#2C5545]">
-                                  Code: {participation.code.code}
+                                  Code: {participation.code?.code || 'N/A'}
                                 </h3>
                                 <p className="text-sm text-gray-500 font-['Lato']">
                                   {new Date(participation.participationDate).toLocaleDateString('fr-FR')}

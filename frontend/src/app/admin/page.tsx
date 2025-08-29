@@ -778,7 +778,7 @@ export default function AdminPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4 font-['Lato'] font-mono text-sm">{participation.code.code}</td>
+                        <td className="py-3 px-4 font-['Lato'] font-mono text-sm">{participation.code?.code || 'N/A'}</td>
                         <td className="py-3 px-4 font-['Lato'] text-sm">
                           {new Date(participation.participationDate).toLocaleDateString('fr-FR')}
                         </td>
