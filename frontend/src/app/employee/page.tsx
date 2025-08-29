@@ -18,9 +18,9 @@ interface UnclaimedPrize {
     name: string;
     value: number;
   };
-  code: {
-    code: string;
-  };
+  code?: {
+    code?: string;
+  } | null;
   participationDate: string;
 }
 
@@ -31,9 +31,9 @@ interface ClaimedPrize {
     name: string;
     value: number;
   };
-  code: {
-    code: string;
-  };
+  code?: {
+    code?: string;
+  } | null;
   participationDate: string;
   claimedAt: string;
 }

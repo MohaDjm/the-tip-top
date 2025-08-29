@@ -392,7 +392,7 @@ export default function AdminPage() {
                               {(participation.gain as any)?.name}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {(participation.code as any)?.value}
+                              {(participation.code as any)?.code || 'N/A'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {new Date(participation.participationDate as string).toLocaleDateString('fr-FR')}
