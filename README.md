@@ -1,6 +1,6 @@
-# Thé Tip Top - Jeu-Concours de Loterie
+# Thé Tip Top - Jeu Concours "10 ans, 10 boutiques, 100% gagnant"
 
-## 🎯 Description du Projet
+<!-- Employee page fixes deployed -->🎯 Description du Projet
 
 Thé Tip Top est une application web de jeu-concours de loterie développée pour une boutique de thé. L'application permet aux clients de participer à un tirage au sort en saisissant des codes uniques trouvés sur leurs achats, avec la possibilité de gagner différents prix.
 
