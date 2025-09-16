@@ -269,8 +269,8 @@ const handleValidateCode = async (req: AuthRequest, res: Response) => {
   try {
     const { code } = req.body;
 
-    // Vérifier le format du code (10 caractères numériques)
-    if (!/^[0-9]{10}$/.test(code)) {
+    // Vérifier le format du code (10 caractères alphanumériques)
+    if (!/^[A-Z0-9]{10}$/.test(code)) {
       return res.status(400).json({ error: 'Format de code invalide' });
     }
 
@@ -317,8 +317,8 @@ app.post('/api/participation/claim', authMiddleware, async (req: AuthRequest, re
 
     console.log('👤 Utilisateur ID:', userId);
 
-    // Vérifier le format du code (10 caractères numériques)
-    if (!/^[0-9]{10}$/.test(code)) {
+    // Vérifier le format du code (10 caractères alphanumériques)
+    if (!/^[A-Z0-9]{10}$/.test(code)) {
       console.log('❌ Format de code invalide:', code);
       return res.status(400).json({ error: 'Format de code invalide' });
     }
@@ -429,8 +429,8 @@ app.post('/api/participation/validate', authMiddleware, async (req: AuthRequest,
     const { code } = req.body;
     const userId = req.user.id;
 
-    // Vérifier le format du code (10 caractères numériques)
-    if (!/^[0-9]{10}$/.test(code)) {
+    // Vérifier le format du code (10 caractères alphanumériques)
+    if (!/^[A-Z0-9]{10}$/.test(code)) {
       return res.status(400).json({ error: 'Format de code invalide' });
     }
 

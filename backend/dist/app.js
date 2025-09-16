@@ -217,8 +217,8 @@ app.post('/api/auth/social', async (req, res) => {
 const handleValidateCode = async (req, res) => {
     try {
         const { code } = req.body;
-        // Vérifier le format du code (10 caractères numériques)
-        if (!/^[0-9]{10}$/.test(code)) {
+        // Vérifier le format du code (10 caractères alphanumériques)
+        if (!/^[A-Z0-9]{10}$/.test(code)) {
             return res.status(400).json({ error: 'Format de code invalide' });
         }
         // Vérifier dans la base de données
@@ -257,8 +257,8 @@ app.post('/api/participation/claim', authMiddleware, async (req, res) => {
         const { code } = req.body;
         const userId = req.user.id;
         console.log('👤 Utilisateur ID:', userId);
-        // Vérifier le format du code (10 caractères numériques)
-        if (!/^[0-9]{10}$/.test(code)) {
+        // Vérifier le format du code (10 caractères alphanumériques)
+        if (!/^[A-Z0-9]{10}$/.test(code)) {
             console.log('❌ Format de code invalide:', code);
             return res.status(400).json({ error: 'Format de code invalide' });
         }
@@ -351,8 +351,8 @@ app.post('/api/participation/validate', authMiddleware, async (req, res) => {
     try {
         const { code } = req.body;
         const userId = req.user.id;
-        // Vérifier le format du code (10 caractères numériques)
-        if (!/^[0-9]{10}$/.test(code)) {
+        // Vérifier le format du code (10 caractères alphanumériques)
+        if (!/^[A-Z0-9]{10}$/.test(code)) {
             return res.status(400).json({ error: 'Format de code invalide' });
         }
         // Vérifier dans le cache Redis d'abord
@@ -1083,10 +1083,13 @@ app.get('/api/employee/unclaimed-prizes', authMiddleware, roleMiddleware(['EMPLO
             where: { isClaimed: false },
             include: {
                 user: {
-                    select: { firstName: true, lastName: true, email: true }
+                    select: { firstName: true, lastName: true, email: true, phone: true }
                 },
                 gain: {
                     select: { name: true, value: true }
+                },
+                code: {
+                    select: { code: true }
                 }
             },
             orderBy: { participationDate: 'desc' }
@@ -1105,10 +1108,13 @@ app.get('/api/employee/claimed-prizes', authMiddleware, roleMiddleware(['EMPLOYE
             where: { isClaimed: true },
             include: {
                 user: {
-                    select: { firstName: true, lastName: true, email: true }
+                    select: { firstName: true, lastName: true, email: true, phone: true }
                 },
                 gain: {
                     select: { name: true, value: true }
+                },
+                code: {
+                    select: { code: true }
                 }
             },
             orderBy: { claimedAt: 'desc' }
