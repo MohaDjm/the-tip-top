@@ -29,6 +29,8 @@ app.use((req, res, next) => {
     'http://localhost:3000',
     'http://localhost:3001',
     'http://164.68.103.88',
+    'http://dsp5-archi-dsp5-G8.fr',
+    'https://dsp5-archi-dsp5-G8.fr',
     process.env.FRONTEND_URL
   ].filter(Boolean);
   

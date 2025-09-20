@@ -3,7 +3,8 @@ const getApiUrl = (): string => {
   // Vérifier d'abord si on est côté client
   if (typeof window !== 'undefined') {
     // Côté client - détecter l'environnement par l'URL
-    if (window.location.hostname === '164.68.103.88') {
+    if (window.location.hostname === '164.68.103.88' || 
+        window.location.hostname === 'dsp5-archi-dsp5-G8.fr') {
       return '/api'; // Utiliser le reverse proxy Nginx
     }
     return 'http://localhost:3002/api';
