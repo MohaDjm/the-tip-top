@@ -16,8 +16,8 @@ dotenv.config();
 
 const app = express();
 
-// Trust proxy pour Nginx reverse proxy
-app.set('trust proxy', true);
+// Trust proxy pour Nginx reverse proxy - Configuration sécurisée
+app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 
 const prisma = new PrismaClient();
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
@@ -64,7 +64,13 @@ app.use(morgan('combined'));
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limite de 100 requêtes
-  message: 'Trop de requêtes, veuillez réessayer plus tard'
+  message: 'Trop de requêtes, veuillez réessayer plus tard',
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Configuration spécifique pour le proxy
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress || 'unknown';
+  }
 });
 
 app.use('/api/', limiter);
@@ -267,12 +273,16 @@ app.post('/api/auth/social', async (req: Request, res: Response) => {
 // Vérifier un code sans le marquer comme utilisé (pour la roue)
 const handleValidateCode = async (req: AuthRequest, res: Response) => {
   try {
+    console.log('🔍 Validation de code demandée:', { code: req.body.code, userId: req.user?.id });
     const { code } = req.body;
 
     // Vérifier le format du code (10 caractères alphanumériques)
     if (!/^[A-Z0-9]{10}$/.test(code)) {
+      console.log('❌ Format de code invalide:', code);
       return res.status(400).json({ error: 'Format de code invalide' });
     }
+
+    console.log('✅ Format de code valide, recherche en base...');
 
     // Vérifier dans la base de données
     const codeEntry = await prisma.code.findUnique({
@@ -281,13 +291,18 @@ const handleValidateCode = async (req: AuthRequest, res: Response) => {
     });
 
     if (!codeEntry) {
+      console.log('❌ Code non trouvé en base:', code);
       return res.status(404).json({ error: 'Code invalide' });
     }
 
+    console.log('✅ Code trouvé:', { code: codeEntry.code, gain: codeEntry.gain.name, isUsed: codeEntry.isUsed });
+
     if (codeEntry.isUsed) {
+      console.log('❌ Code déjà utilisé:', code);
       return res.status(400).json({ error: 'Ce code a déjà été utilisé' });
     }
 
+    console.log('✅ Code valide, envoi de la réponse...');
     // Retourner le gain sans marquer le code comme utilisé
     res.json({
       valid: true,
@@ -298,7 +313,7 @@ const handleValidateCode = async (req: AuthRequest, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Erreur vérification code:', error);
+    console.error('❌ Erreur vérification code:', error);
     res.status(500).json({ error: 'Erreur lors de la vérification du code' });
   }
 };
