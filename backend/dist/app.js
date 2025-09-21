@@ -17,8 +17,8 @@ const ioredis_1 = __importDefault(require("ioredis"));
 const email_service_1 = require("./services/email.service");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-// Trust proxy pour Nginx reverse proxy
-app.set('trust proxy', true);
+// Trust proxy pour Nginx reverse proxy - Configuration sécurisée
+app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 const prisma = new client_1.PrismaClient();
 const redis = new ioredis_1.default(process.env.REDIS_URL || 'redis://localhost:6379');
 // Configuration CORS globale
@@ -28,6 +28,8 @@ app.use((req, res, next) => {
         'http://localhost:3000',
         'http://localhost:3001',
         'http://164.68.103.88',
+        'http://dsp5-archi-dsp5-G8.fr',
+        'https://dsp5-archi-dsp5-G8.fr',
         process.env.FRONTEND_URL
     ].filter(Boolean);
     // Pour les requêtes via Nginx reverse proxy, accepter toutes les origines du même domaine
@@ -56,7 +58,13 @@ app.use((0, morgan_1.default)('combined'));
 const limiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // Limite de 100 requêtes
-    message: 'Trop de requêtes, veuillez réessayer plus tard'
+    message: 'Trop de requêtes, veuillez réessayer plus tard',
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Configuration spécifique pour le proxy
+    keyGenerator: (req) => {
+        return req.ip || req.connection.remoteAddress || 'unknown';
+    }
 });
 app.use('/api/', limiter);
 const authMiddleware = async (req, res, next) => {
@@ -216,22 +224,29 @@ app.post('/api/auth/social', async (req, res) => {
 // Vérifier un code sans le marquer comme utilisé (pour la roue)
 const handleValidateCode = async (req, res) => {
     try {
+        console.log('🔍 Validation de code demandée:', { code: req.body.code, userId: req.user?.id });
         const { code } = req.body;
         // Vérifier le format du code (10 caractères alphanumériques)
         if (!/^[A-Z0-9]{10}$/.test(code)) {
+            console.log('❌ Format de code invalide:', code);
             return res.status(400).json({ error: 'Format de code invalide' });
         }
+        console.log('✅ Format de code valide, recherche en base...');
         // Vérifier dans la base de données
         const codeEntry = await prisma.code.findUnique({
             where: { code },
             include: { gain: true }
         });
         if (!codeEntry) {
+            console.log('❌ Code non trouvé en base:', code);
             return res.status(404).json({ error: 'Code invalide' });
         }
+        console.log('✅ Code trouvé:', { code: codeEntry.code, gain: codeEntry.gain.name, isUsed: codeEntry.isUsed });
         if (codeEntry.isUsed) {
+            console.log('❌ Code déjà utilisé:', code);
             return res.status(400).json({ error: 'Ce code a déjà été utilisé' });
         }
+        console.log('✅ Code valide, envoi de la réponse...');
         // Retourner le gain sans marquer le code comme utilisé
         res.json({
             valid: true,
@@ -243,7 +258,7 @@ const handleValidateCode = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Erreur vérification code:', error);
+        console.error('❌ Erreur vérification code:', error);
         res.status(500).json({ error: 'Erreur lors de la vérification du code' });
     }
 };

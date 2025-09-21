@@ -123,6 +123,19 @@ quick-test-*.js
 debug-*.js
 check-*.js
 simple-test.js
+*-test.js
+create-test-*.js
+generate-*.js
+sonar-analysis.js
+
+# Fichiers SQL temporaires
+create-users.sql
+insert_test_user.sql
+*-export-*.sql
+
+# Applications de test
+testApp.ts
+testApp.js
 
 # Fichiers de configuration temporaires
 nginx-config-fix.txt
@@ -132,3 +145,8 @@ test-login.json
 *.zip
 *.tar.gz
 *.rar
+
+# Exports de base de données
+exports/
+database-export-*.sql
+database-export-*.json
